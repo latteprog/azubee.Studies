@@ -1,5 +1,5 @@
 import pandas as pd
-from scipy.stats import ttest_ind, ttest_rel
+from scipy.stats import ttest_rel
 
 def extract_entries(df: pd.DataFrame, was_trained: bool):
     if was_trained:
@@ -31,7 +31,7 @@ t_test_result = ttest_rel(
 print(t_test_result)
 
 # TtestResult(statistic=2.708711296686492, pvalue=0.006006691963389517, df=25)
-# Signifikanzniveau 0,01
+# Konfidenzintervall 95 %
 # p-Wert 0,006
 
 # Nullhypothese wird abgelehnt, Alternativhypothese wird angenommen
