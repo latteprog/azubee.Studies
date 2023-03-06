@@ -20,9 +20,6 @@ def prepare_data():
 
 trained_diff, not_trained_diff = prepare_data()
 
-print(trained_diff.mean())
-print(not_trained_diff.mean())
-
 # Null hypothesis: trained and untrained improvements are equally distributed
 t_test_result = ttest_rel(
     trained_diff,
@@ -35,7 +32,7 @@ print(t_test_result)
 
 # TtestResult(statistic=1.5381972476555226, pvalue=0.06742065093784343, df=29)
 # Konfidenzintervall 90 %
-# p-Wert 0,06
+# p-Wert 0,0674
 
 # Nullhypothese wird abgelehnt, Alternativhypothese wird angenommen
 # Die recommended improvements sind im Schnitt größer als die unrecommended improvements
