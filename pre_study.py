@@ -30,8 +30,8 @@ t_test_result = ttest_rel(
 
 print(t_test_result)
 
-# TtestResult(statistic=2.2849252797709916, pvalue=0.015535199041210708, df=25)
-# Konfidenzintervall 95 %
+# TtestResult(statistic=2.708711296686492, pvalue=0.006006691963389517, df=25)
+# Konfidenzintervall 99 %
 # p-Wert 0,0155
 
 # Nullhypothese wird abgelehnt, Alternativhypothese wird angenommen
