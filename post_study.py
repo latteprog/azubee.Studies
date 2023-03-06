@@ -1,7 +1,6 @@
 import pandas as pd
 from scipy.stats import ttest_rel
-import seaborn as sns
-import matplotlib.pyplot as plt
+from util import render_boxplot, print_stats
 
 def extract_entries(df: pd.DataFrame, was_trained: bool):
     if was_trained:
@@ -32,9 +31,8 @@ t_test_result = ttest_rel(
 )
 
 print(t_test_result)
-ax = sns.boxplot(data=[trained_abs, untrained_abs], medianprops={'color': 'purple', 'lw': 2})
-ax.set_xticklabels(["Recommendations", "No recommendations"])
-plt.show()
+render_boxplot(trained_abs, untrained_abs)
+print_stats(trained_abs, untrained_abs)
 # TtestResult(statistic=1.5381972476555226, pvalue=0.06742065093784343, df=29)
 # Konfidenzintervall 90 %
 # p-Wert 0,0674
