@@ -1,5 +1,7 @@
 import pandas as pd
 from scipy.stats import ttest_rel
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def extract_entries(df: pd.DataFrame, was_trained: bool):
     if was_trained:
@@ -14,11 +16,12 @@ def prepare_data():
 
     trained = extract_entries(df=data, was_trained=True)["Improvement"].to_numpy()
     not_trained = extract_entries(df=data, was_trained=False)["Improvement"].to_numpy()
+    trained_abs = extract_entries(df=data, was_trained=True)["ImprovementAbs"].to_numpy()
+    not_trained_abs = extract_entries(df=data,was_trained=False)["ImprovementAbs"].to_numpy()
 
-    return trained, not_trained
+    return trained, not_trained, trained_abs, not_trained_abs
 
-
-trained_diff, not_trained_diff = prepare_data()
+trained_diff, not_trained_diff, trained_abs, untrained_abs = prepare_data()
 
 # Null hypothesis: trained and untrained improvements are equally distributed
 t_test_result = ttest_rel(
@@ -29,7 +32,9 @@ t_test_result = ttest_rel(
 )
 
 print(t_test_result)
-
+ax = sns.boxplot(data=[trained_abs, untrained_abs], medianprops={'color': 'purple', 'lw': 2})
+ax.set_xticklabels(["Recommendations", "No recommendations"])
+plt.show()
 # TtestResult(statistic=1.5381972476555226, pvalue=0.06742065093784343, df=29)
 # Konfidenzintervall 90 %
 # p-Wert 0,0674

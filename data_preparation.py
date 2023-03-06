@@ -28,12 +28,12 @@ def preprocess_evaluation(study_name, mapping_idx):
     data["User"] = posttest["User"]
     data["Exercise"] = posttest["Exercise"]
     # Calculate improvement for each entry
-    data["Improvement"] = (posttest["Correct"] - pretest["Correct"])
+    data["ImprovementAbs"] = (posttest["Correct"] - pretest["Correct"])
 
     for index, row in data.iterrows():
         exercise = str(row["Exercise"])
         # Divide by max points for relative improvement
-        data.at[index, "Improvement"] = row["Improvement"] / mapping[mapping_idx][exercise]
+        data.at[index, "Improvement"] = row["ImprovementAbs"] / mapping[mapping_idx][exercise]
 
     data.to_csv(f"preprocessed/{study_name}_preprocessed.csv", index=None)
 
