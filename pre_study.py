@@ -1,6 +1,7 @@
 import pandas as pd
 from scipy.stats import ttest_rel
-from util import render_boxplot, print_stats
+from util import render_boxplot
+
 
 def extract_entries(df: pd.DataFrame, was_trained: bool):
     if was_trained:
@@ -10,30 +11,34 @@ def extract_entries(df: pd.DataFrame, was_trained: bool):
 
     return eq[eq["User"].notna()]
 
+
 def prepare_data():
     data = pd.read_csv("preprocessed/pre_study_preprocessed.csv")
 
     trained = extract_entries(df=data, was_trained=True)["Improvement"].to_numpy()
-    not_trained = extract_entries(df=data,was_trained=False)["Improvement"].to_numpy()
-    trained_abs = extract_entries(df=data, was_trained=True)["ImprovementAbs"].to_numpy()
-    not_trained_abs = extract_entries(df=data,was_trained=False)["ImprovementAbs"].to_numpy()
+    not_trained = extract_entries(df=data, was_trained=False)["Improvement"].to_numpy()
 
-    return trained, not_trained, trained_abs, not_trained_abs
+    return trained, not_trained
 
-trained_improvements, not_trained_improvements, trained_abs, untrained_abs = prepare_data()
+
+trained_improvements, untrained_improvements = prepare_data()
 
 # Null hypothesis: trained and untrained improvements are equally distributed
 t_test_result = ttest_rel(
     trained_improvements,
-    not_trained_improvements,
+    untrained_improvements,
     # Alternative: mean of the first is greater than mean of the second distribution
     alternative='greater'
 )
 
 print(t_test_result)
 
-render_boxplot(trained_abs, untrained_abs)
-print_stats(trained_abs, untrained_abs)
+render_boxplot(
+    trained_improvements,
+    untrained_improvements,
+    "prestudy_improvements_boxplot",
+    ["Trained", "Untrained"]
+)
 # TtestResult(statistic=2.708711296686492, pvalue=0.006006691963389517, df=25)
 # Konfidenzintervall 99 %
 # p-Wert 0.0060
