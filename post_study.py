@@ -1,6 +1,6 @@
 import pandas as pd
 from scipy.stats import ttest_ind
-from util import render_boxplot, render_barplot
+from util import render_boxplot, render_barplot, calculate_cohends_d
 
 
 def extract_entries(df: pd.DataFrame, was_recommended: bool):
@@ -37,28 +37,51 @@ def render_skill_distributions(recommended, unrecommended):
     render_barplot(x, unrecommended_improvement.to_numpy(), "unrecommended_improvement")
 
 
-recommended, unrecommended = prepare_data()
+def first_t_test(recommended, unrecommended):
+    recommended_improvements = recommended["Improvement"].to_numpy()
+    unrecommended_improvements = unrecommended["Improvement"].to_numpy()
 
+    # Null hypothesis: recommended and unrecommended improvements are equally distributed
+    t_test_result = ttest_ind(
+        recommended_improvements,
+        unrecommended_improvements,
+        # Alternative: mean of the first is greater than mean of the second distribution
+        alternative='greater'
+    )
+
+    print("1. Test if students with recommendation system improved more")
+    print("   ", t_test_result)
+    print(f"    Cohens D value: {calculate_cohends_d(recommended_improvements, unrecommended_improvements)}")
+
+
+def second_t_test(recommended, unrecommended):
+    recommended_correct_var = recommended.groupby(["User"]).var()["PosttestCorrectRel"]
+    unrecommended_correct_var = unrecommended.groupby(["User"]).var()["PosttestCorrectRel"]
+
+    # Null hypothesis: recommended and unrecommended variances in posttest correctness are equally distributed
+    t_test_result = ttest_ind(
+        recommended_correct_var,
+        unrecommended_correct_var,
+        # Alternative: mean of the first is smaller than mean of the second distribution
+        alternative='less'
+    )
+
+    print("2. Test if students with recommendation system learned more equally distributed")
+    print("   ", t_test_result)
+    print(f"    Cohens D value: {calculate_cohends_d(recommended_correct_var, unrecommended_correct_var)}")
+
+
+recommended, unrecommended = prepare_data()
 render_skill_distributions(recommended, unrecommended)
 
-# Null hypothesis: recommended and unrecommended improvements are equally distributed
-t_test_result = ttest_ind(
-    recommended["Improvement"].to_numpy(),
-    unrecommended["Improvement"].to_numpy(),
-    # Alternative: mean of the first is smaller than mean of the second distribution
-    alternative='greater'
-)
 
-print(t_test_result)
+first_t_test(recommended, unrecommended)
+second_t_test(recommended, unrecommended)
+
+
 render_boxplot(
     recommended,
     unrecommended,
     "mainstudy_improvements_boxplot",
     ["Recommendation System", "No recommendations"]
 )
-# TtestResult(statistic=1.5381972476555226, pvalue=0.06742065093784343, df=29)
-# Konfidenzintervall 90 %
-# p-Wert 0,0674
-
-# Nullhypothese wird abgelehnt, Alternativhypothese wird angenommen
-# Die recommended improvements sind im Schnitt größer als die unrecommended improvements

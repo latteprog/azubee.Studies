@@ -1,5 +1,7 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
+from math import sqrt
+from statistics import mean, stdev
 
 
 def render_boxplot(trained, untrained, filename, labels):
@@ -13,3 +15,7 @@ def render_barplot(x, y, filename):
     sns.barplot(x=x, y=y)
     plt.savefig(f"img/{filename}.png")
     plt.close()
+
+
+def calculate_cohends_d(dist_1, dist_2):
+    return (mean(dist_1) - mean(dist_2)) / (sqrt((stdev(dist_1) ** 2 + stdev(dist_2) ** 2) / 2))

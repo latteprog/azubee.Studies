@@ -39,9 +39,3 @@ render_boxplot(
     "prestudy_improvements_boxplot",
     ["Trained", "Untrained"]
 )
-# TtestResult(statistic=2.708711296686492, pvalue=0.006006691963389517, df=25)
-# Konfidenzintervall 99 %
-# p-Wert 0.0060
-
-# Nullhypothese wird abgelehnt, Alternativhypothese wird angenommen
-# Die Trained Improvements sind im Schnitt größer als die Untrained Improvements
