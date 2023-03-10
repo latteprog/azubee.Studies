@@ -55,6 +55,24 @@ def first_t_test(recommended, unrecommended):
 
 
 def second_t_test(recommended, unrecommended):
+    recommended_correct_var = recommended["NormalizedChange"].to_numpy()
+    unrecommended_correct_var = unrecommended["NormalizedChange"].to_numpy()
+
+    # Null hypothesis: recommended and unrecommended variances in posttest correctness are equally distributed
+    t_test_result = ttest_ind(
+        recommended_correct_var,
+        unrecommended_correct_var,
+        # Alternative: mean of the first is greater than mean of the second distribution
+        alternative='greater'
+    )
+
+    # https://www.physport.org/recommendations/Entry.cfm?ID=93334
+    print("2. Test if students with recommendation had a higher normalized change (similar to average student normalized gain)")
+    print("   ", t_test_result)
+    print(f"    Cohens D value: {calculate_cohends_d(recommended_correct_var, unrecommended_correct_var)}")
+
+
+def third_t_test(recommended, unrecommended):
     recommended_correct_var = recommended.groupby(["User"]).var()["PosttestCorrectRel"]
     unrecommended_correct_var = unrecommended.groupby(["User"]).var()["PosttestCorrectRel"]
 
@@ -66,7 +84,7 @@ def second_t_test(recommended, unrecommended):
         alternative='less'
     )
 
-    print("2. Test if students with recommendation system learned more equally distributed")
+    print("3. Test if students with recommendation system learned distributed more equally")
     print("   ", t_test_result)
     print(f"    Cohens D value: {calculate_cohends_d(recommended_correct_var, unrecommended_correct_var)}")
 
@@ -77,6 +95,7 @@ render_skill_distributions(recommended, unrecommended)
 
 first_t_test(recommended, unrecommended)
 second_t_test(recommended, unrecommended)
+third_t_test(recommended, unrecommended)
 
 
 render_boxplot(

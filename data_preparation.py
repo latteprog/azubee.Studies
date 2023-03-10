@@ -42,6 +42,17 @@ def preprocess_evaluation(study_name, mapping_idx):
         data.at[index, "PretestCorrectRel"] = row["PretestCorrect"] / mapping[mapping_idx][exercise]
         data.at[index, "PosttestCorrectRel"] = row["PosttestCorrect"] / mapping[mapping_idx][exercise]
 
+        # Calculate Relative Correctness (0.0 - 1.0)
+        rel_post_correct = (row["PosttestCorrect"] / mapping[mapping_idx][exercise])
+        rel_pre_correct = (row["PretestCorrect"] / mapping[mapping_idx][exercise])
+
+        if rel_post_correct > rel_pre_correct:
+            data.at[index, "NormalizedChange"] = (rel_post_correct - rel_pre_correct) / (1 - rel_pre_correct)
+        elif rel_post_correct < rel_pre_correct:
+            data.at[index, "NormalizedChange"] = (rel_post_correct - rel_pre_correct) / (rel_pre_correct)
+        else:
+            data.at[index, "NormalizedChange"] = 0
+
     data.to_csv(f"preprocessed/{study_name}_preprocessed.csv", index=None)
 
 
