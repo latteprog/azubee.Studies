@@ -99,8 +99,8 @@ third_t_test(recommended, unrecommended)
 
 
 render_boxplot(
-    recommended,
-    unrecommended,
-    "mainstudy_improvements_boxplot",
+    recommended["NormalizedChange"].to_numpy(),
+    unrecommended["NormalizedChange"].to_numpy(),
+    "mainstudy_normalized_change_boxplot",
     ["Recommendation System", "No recommendations"]
 )
