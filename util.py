@@ -4,8 +4,9 @@ from math import sqrt
 from statistics import mean, stdev
 
 
-def render_boxplot(trained, untrained, filename, labels):
+def render_boxplot(trained, untrained, filename, labels, title=""):
     ax = sns.boxplot(data=[trained, untrained], medianprops={'color': 'purple', 'lw': 2})
+    ax.set(title=title)
     ax.set_xticklabels(labels)
     plt.savefig(f"img/{filename}.png")
     plt.close()

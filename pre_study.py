@@ -38,5 +38,6 @@ render_boxplot(
     trained,
     untrained,
     "prestudy_normalized_change_boxplot",
-    ["Trained", "Untrained"]
+    ["Trained Skills", "Untrained Skills"],
+    title="Normalized Change"
 )

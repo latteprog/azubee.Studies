@@ -114,5 +114,6 @@ render_boxplot(
     recommended["NormalizedChange"].to_numpy(),
     unrecommended["NormalizedChange"].to_numpy(),
     "mainstudy_normalized_change_boxplot",
-    ["Recommendation System", "No recommendations"]
+    ["Recommendation System", "No recommendations"],
+    title="Normalized Change"
 )
