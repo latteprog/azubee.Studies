@@ -1,6 +1,6 @@
 import pandas as pd
 from scipy.stats import ttest_rel
-from util import render_boxplot
+from util import render_boxplot, calculate_cohends_d
 
 
 def extract_entries(df: pd.DataFrame, was_trained: bool):
@@ -32,6 +32,7 @@ t_test_result = ttest_rel(
 )
 
 print(t_test_result)
+print(f"    Cohens D value: {calculate_cohends_d(trained, untrained)}")
 
 render_boxplot(
     trained,

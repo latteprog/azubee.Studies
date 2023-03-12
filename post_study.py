@@ -25,16 +25,22 @@ def render_skill_distributions(recommended, unrecommended):
     recommended_means = recommended.groupby(["Exercise"]).mean()
     unrecommended_means = unrecommended.groupby(["Exercise"]).mean()
 
-    recommended_correct = recommended_means["PosttestCorrectRel"]
-    recommended_improvement = recommended_means["Improvement"]
-    unrecommended_correct = unrecommended_means["PosttestCorrectRel"]
-    unrecommended_improvement = unrecommended_means["Improvement"]
+    recommended_correct = recommended_means["PosttestCorrectRel"].to_numpy()
+    recommended_normalized_change = recommended_means["NormalizedChange"].to_numpy()
+    unrecommended_correct = unrecommended_means["PosttestCorrectRel"].to_numpy()
+    unrecommended_normalized_change = unrecommended_means["NormalizedChange"].to_numpy()
 
-    x = [1, 2, 3, 4, 5]
-    render_barplot(x, recommended_correct.to_numpy(), "recommended_correct")
-    render_barplot(x, unrecommended_correct.to_numpy(), "unrecommended_correct")
-    render_barplot(x, recommended_improvement.to_numpy(), "recommended_improvement")
-    render_barplot(x, unrecommended_improvement.to_numpy(), "unrecommended_improvement")
+    # Dirty way of grouping skills [(1, 4), (2, 5), (3)]
+    recommended_correct_grouped = [(recommended_correct[0] + recommended_correct[3]) / 2, (recommended_correct[1] + recommended_correct[4]), recommended_correct[2]]
+    recommended_normalized_change_grouped = [(recommended_normalized_change[0] + recommended_normalized_change[3]) / 2, (recommended_normalized_change[1] + recommended_normalized_change[4]), recommended_normalized_change[2]]
+    unrecommended_correct_grouped = [(unrecommended_correct[0] + unrecommended_correct[3]) / 2, (unrecommended_correct[1] + unrecommended_correct[4]), unrecommended_correct[2]]
+    unrecommended_normalized_change_grouped = [(unrecommended_normalized_change[0] + unrecommended_normalized_change[3]) / 2, (unrecommended_normalized_change[1] + unrecommended_normalized_change[4]), unrecommended_normalized_change[2]]
+
+    x = [1, 2, 3]
+    render_barplot(x, recommended_correct_grouped, "recommended_correct", "Recommendation System: Correct")
+    render_barplot(x, unrecommended_correct_grouped, "unrecommended_correct", "No Recommendation System: Correct")
+    render_barplot(x, recommended_normalized_change_grouped, "recommended_normalized_change", "Recommendation System: Normalized Change")
+    render_barplot(x, unrecommended_normalized_change_grouped, "unrecommended_normalized_change", "No Recommendation System: Normalized Change")
 
 
 def first_t_test(recommended, unrecommended):

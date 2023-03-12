@@ -11,8 +11,8 @@ def render_boxplot(trained, untrained, filename, labels):
     plt.close()
 
 
-def render_barplot(x, y, filename):
-    sns.barplot(x=x, y=y)
+def render_barplot(x, y, filename, title=""):
+    sns.barplot(x=x, y=y).set(title=title)
     plt.savefig(f"img/{filename}.png")
     plt.close()
 
