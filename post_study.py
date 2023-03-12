@@ -37,10 +37,11 @@ def render_skill_distributions(recommended, unrecommended):
     unrecommended_normalized_change_grouped = [(unrecommended_normalized_change[0] + unrecommended_normalized_change[3]) / 2, (unrecommended_normalized_change[1] + unrecommended_normalized_change[4]), unrecommended_normalized_change[2]]
 
     x = [1, 2, 3]
-    render_barplot(x, recommended_correct_grouped, "recommended_correct", "Recommendation System: Correct")
-    render_barplot(x, unrecommended_correct_grouped, "unrecommended_correct", "No Recommendation System: Correct")
-    render_barplot(x, recommended_normalized_change_grouped, "recommended_normalized_change", "Recommendation System: Normalized Change")
-    render_barplot(x, unrecommended_normalized_change_grouped, "unrecommended_normalized_change", "No Recommendation System: Normalized Change")
+    labels = ["VLAN", "Static Routing", "IPv4 Addresses"]
+    render_barplot(x, recommended_correct_grouped, "recommended_correct", "Recommendation System: Correct", labels=labels)
+    render_barplot(x, unrecommended_correct_grouped, "unrecommended_correct", "No Recommendation System: Correct", labels=labels)
+    render_barplot(x, recommended_normalized_change_grouped, "recommended_normalized_change", "Recommendation System: Normalized Change", labels=labels)
+    render_barplot(x, unrecommended_normalized_change_grouped, "unrecommended_normalized_change", "No Recommendation System: Normalized Change", labels=labels)
 
 
 def first_t_test(recommended, unrecommended):
