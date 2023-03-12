@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from typing import Dict, List
 
-SKILL_ID = "it-network-plan-ipv4-addressing"
+SKILL_ID = "it-network-plan"
 
 datapoints: Dict[str, List[float]] = dict()
 

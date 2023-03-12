@@ -79,20 +79,25 @@ def second_t_test(recommended, unrecommended):
 
 
 def third_t_test(recommended, unrecommended):
-    recommended_correct_var = recommended.groupby(["User"]).var()["PosttestCorrectRel"]
-    unrecommended_correct_var = unrecommended.groupby(["User"]).var()["PosttestCorrectRel"]
+    recommended_correct_max = recommended.groupby(["User"]).max()["PosttestCorrectRel"]
+    unrecommended_correct_max = unrecommended.groupby(["User"]).max()["PosttestCorrectRel"]
+    recommended_correct_min = recommended.groupby(["User"]).min()["PosttestCorrectRel"]
+    unrecommended_correct_min = unrecommended.groupby(["User"]).min()["PosttestCorrectRel"]
 
-    # Null hypothesis: recommended and unrecommended variances in posttest correctness are equally distributed
+    recommended_correct_diff = (recommended_correct_max - recommended_correct_min).to_numpy()
+    unrecommended_correct_diff = (unrecommended_correct_max - unrecommended_correct_min).to_numpy()
+
+    # Null hypothesis: recommended and unrecommended diffs between max and min correctness are equally distributed
     t_test_result = ttest_ind(
-        recommended_correct_var,
-        unrecommended_correct_var,
+        recommended_correct_diff,
+        unrecommended_correct_diff,
         # Alternative: mean of the first is smaller than mean of the second distribution
         alternative='less'
     )
 
     print("3. Test if students with recommendation system learned distributed more equally")
     print("   ", t_test_result)
-    print(f"    Cohens D value: {calculate_cohends_d(recommended_correct_var, unrecommended_correct_var)}")
+    print(f"    Cohens D value: {calculate_cohends_d(recommended_correct_diff, unrecommended_correct_diff)}")
 
 
 recommended, unrecommended = prepare_data()
