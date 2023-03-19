@@ -26,6 +26,20 @@ def prepare_data():
     return trained, not_trained
 
 def first_t_test(trained, untrained):
+    trained_improvements = trained.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbs"].to_numpy()
+    untrained_improvements = untrained.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbs"].to_numpy()
+
+    # Null hypothesis: trained and untrained improvements are equally distributed
+    t_test_result = ttest_rel(
+        trained_improvements,
+        untrained_improvements,
+        # Alternative: mean of the first is greater than mean of the second distribution
+        alternative='greater'
+    )
+
+    return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
+
+def second_t_test(trained, untrained):
     trained_improvements = trained["ImprovementAbs"].to_numpy()
     untrained_improvements = untrained["ImprovementAbs"].to_numpy()
 
@@ -39,7 +53,21 @@ def first_t_test(trained, untrained):
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
-def second_t_test(trained, untrained):
+def third_t_test(trained, untrained):
+    trained_improvements = trained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"].to_numpy()
+    untrained_improvements = untrained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"].to_numpy()
+
+    # Null hypothesis: trained and untrained improvements are equally distributed
+    t_test_result = ttest_rel(
+        trained_improvements,
+        untrained_improvements,
+        # Alternative: mean of the first is greater than mean of the second distribution
+        alternative='greater'
+    )
+
+    return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
+
+def fourth_t_test(trained, untrained):
     trained_improvements = trained["NormalizedChange"].to_numpy()
     untrained_improvements = untrained["NormalizedChange"].to_numpy()
 
@@ -57,13 +85,16 @@ def second_t_test(trained, untrained):
 trained, untrained = prepare_data()
 
 improv_t_res, improv_cohens = first_t_test(trained, untrained)
-normalized_t_res, normalized_cohens = second_t_test(trained, untrained)
+improv_exercise_t_res, improv_exercise_cohens = second_t_test(trained, untrained)
+normalized_t_res, normalized_cohens = third_t_test(trained, untrained)
+normalized_exercise_t_res, normalized_exercise_cohens = fourth_t_test(trained, untrained)
+
 
 data = pd.DataFrame({
-    'type' : ["improvement_abs", "normalized_change"], 
-    't' : [improv_t_res.statistic, normalized_t_res.statistic],
-    'p': [improv_t_res.pvalue, normalized_t_res.pvalue],
-    'cohens': [improv_cohens, normalized_cohens]
+    'type' : ["improvement_abs_skill", "improvement_abs_exercise", "normalized_change_skill", "normalized_change_exercise"], 
+    't' : [improv_t_res.statistic, improv_exercise_t_res.statistic, normalized_t_res.statistic, normalized_exercise_t_res.statistic],
+    'p': [improv_t_res.pvalue, improv_exercise_t_res.pvalue, normalized_t_res.pvalue, normalized_exercise_t_res.pvalue],
+    'cohens': [improv_cohens, improv_exercise_cohens, normalized_cohens, normalized_exercise_cohens]
 })
 data.to_csv(f"results/pre_evaluation.csv", index=None)
 
