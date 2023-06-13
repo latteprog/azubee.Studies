@@ -1,6 +1,7 @@
 import pandas as pd
-from scipy.stats import ttest_ind
-from util import render_boxplot, render_barplot, calculate_cohends_d
+import numpy as np
+from scipy.stats import ttest_ind, levene, mannwhitneyu
+from util import render_comparison_histogram, normalize_scores, calculate_cohends_d
 
 # Exercise 1 : it-network-plan-vlan
 # Exercise 2 : it-network-plan-ipv4-static-routing
@@ -26,32 +27,30 @@ def prepare_data():
 
     return recommended, unrecommended
 
+def pre_test_correct_rel_test(recommended, unrecommended):
+    recommended_pretest = recommended.groupby(["User", "ExerciseSkill"]).mean()["PretestCorrectRel"].to_numpy()
+    recommended_posttest = recommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"].to_numpy()
 
-def render_skill_distributions(recommended, unrecommended):
-    recommended_means = recommended.groupby(["Exercise"]).mean()
-    unrecommended_means = unrecommended.groupby(["Exercise"]).mean()
+    unrecommended_pretest = unrecommended.groupby(["User", "ExerciseSkill"]).mean()["PretestCorrectRel"].to_numpy()
+    unrecommended_posttest = unrecommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"].to_numpy()
 
-    recommended_correct = recommended_means["PosttestCorrectRel"].to_numpy()
-    recommended_normalized_change = recommended_means["NormalizedChange"].to_numpy()
-    unrecommended_correct = unrecommended_means["PosttestCorrectRel"].to_numpy()
-    unrecommended_normalized_change = unrecommended_means["NormalizedChange"].to_numpy()
+    # Graphical Evaluation
+    render_comparison_histogram(a=recommended_pretest, b=unrecommended_pretest,a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_comparison_pre_scores")
+    render_comparison_histogram(a=recommended_posttest, b=unrecommended_posttest,a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_comparison_post_scores")
 
-    # Dirty way of grouping skills [(1, 4), (2, 5), (3)]
-    recommended_correct_grouped = [(recommended_correct[0] + recommended_correct[3]) / 2, (recommended_correct[1] + recommended_correct[4]), recommended_correct[2]]
-    recommended_normalized_change_grouped = [(recommended_normalized_change[0] + recommended_normalized_change[3]) / 2, (recommended_normalized_change[1] + recommended_normalized_change[4]), recommended_normalized_change[2]]
-    unrecommended_correct_grouped = [(unrecommended_correct[0] + unrecommended_correct[3]) / 2, (unrecommended_correct[1] + unrecommended_correct[4]), unrecommended_correct[2]]
-    unrecommended_normalized_change_grouped = [(unrecommended_normalized_change[0] + unrecommended_normalized_change[3]) / 2, (unrecommended_normalized_change[1] + unrecommended_normalized_change[4]), unrecommended_normalized_change[2]]
+def test_improvement_abs(recommended, unrecommended):
+    recommended_improvements = recommended["ImprovementAbsNormalizedScores"].to_numpy()
+    unrecommended_improvements = unrecommended["ImprovementAbsNormalizedScores"].to_numpy()
 
-    x = ["VLAN", "Static Routing", "IPv4 Addresses"]
-    render_barplot(x, recommended_correct_grouped, "recommended_correct", "Recommendation System: Correct",)
-    render_barplot(x, unrecommended_correct_grouped, "unrecommended_correct", "No Recommendation System: Correct")
-    render_barplot(x, recommended_normalized_change_grouped, "recommended_normalized_change", "Recommendation System: Normalized Change")
-    render_barplot(x, unrecommended_normalized_change_grouped, "unrecommended_normalized_change", "No Recommendation System: Normalized Change")
+    # A) Graphical Evaluation
+    render_comparison_histogram(
+        a=recommended_improvements,
+        b=unrecommended_improvements,
+        a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_improvement_abs")
 
+    # B) Analytical Evaluation (Distribution)
 
-def first_t_test(recommended, unrecommended):
-    recommended_improvements = recommended["ImprovementAbs"].to_numpy()
-    unrecommended_improvements = unrecommended["ImprovementAbs"].to_numpy()
+    # C) Hypothesis Test
 
     # Null hypothesis: recommended and unrecommended improvements are equally distributed
     t_test_result = ttest_ind(
@@ -63,11 +62,20 @@ def first_t_test(recommended, unrecommended):
 
     return t_test_result, calculate_cohends_d(recommended_improvements, unrecommended_improvements)
 
-def second_t_test(recommended, unrecommended):
+def test_improvement_normalized_change(recommended, unrecommended):
     recommended_normalized_change = recommended["NormalizedChange"].to_numpy()
     unrecommended_normalized_change = unrecommended["NormalizedChange"].to_numpy()
 
-    # Null hypothesis: recommended and unrecommended variances in posttest correctness are equally distributed
+    # A) Graphical Evaluation (Distribution)
+    render_comparison_histogram(
+        a=recommended_normalized_change,
+        b=unrecommended_normalized_change,
+        a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_improvement_normalized_change")
+
+    # B) Analytical Evaluation (Distribution)
+
+    # C) Hypothesis Test
+    # Null hypothesis: recommended and unrecommended normalized change equally distributed (learning improvement)
     t_test_result = ttest_ind(
         recommended_normalized_change,
         unrecommended_normalized_change,
@@ -77,54 +85,69 @@ def second_t_test(recommended, unrecommended):
 
     return t_test_result, calculate_cohends_d(recommended_normalized_change, unrecommended_normalized_change)
 
-def third_t_test(recommended, unrecommended):
-    # Group By Exercise
-    recommended_by_exercise = recommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"]
-    unrecommended_by_exercise = unrecommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"]
+def test_smaller_recommendation_variances(recommended, unrecommended):
+    # Group By Skill
+    recommended_by_exercise = recommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"].to_numpy()
+    unrecommended_by_exercise = unrecommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"].to_numpy()
 
-    # Minimum Skills
-    recommended_min = recommended_by_exercise.groupby("User").agg('min')
-    unrecommended_min = unrecommended_by_exercise.groupby("User").agg('min')
+    # A) Graphical Evaluation (Distribution)
+    render_comparison_histogram(
+        a=recommended_by_exercise,
+        b=unrecommended_by_exercise,
+        a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_skill_rel")
 
-    # Maximum Skills
-    recommended_max = recommended_by_exercise.groupby("User").agg('max')
-    unrecommended_max = unrecommended_by_exercise.groupby("User").agg('max')
+    t_test_result = levene(recommended_by_exercise, unrecommended_by_exercise)
 
-    # Differences
-    recommended_diff = (recommended_max - recommended_min).to_numpy()
-    unrecommended_diff = (unrecommended_max - unrecommended_min).to_numpy()
-    
-    # Null hypothesis: recommended and unrecommended diffs between max and min correctness are equally distributed
-    t_test_result = ttest_ind(
-        recommended_diff,
-        unrecommended_diff,
-        # Alternative: mean of the first is smaller than mean of the second distribution
+    variance_with_recommendation = np.var(recommended_by_exercise, ddof=1)
+    variance_without_recommendation = np.var(unrecommended_by_exercise, ddof=1)
+
+    print(variance_with_recommendation)
+    print(variance_without_recommendation)
+
+    if variance_with_recommendation < variance_without_recommendation:
+        print("The recommendation system led to more even learning across the three skills.")
+    else:
+        print("The recommendation system did not lead to more even learning across the three skills.")
+
+    return t_test_result
+
+def test_reduced_recommendation_variances(recommended, unrecommended):
+    recommended_variances = recommended.groupby(["User"]).var()
+    unrecommended_variances = unrecommended.groupby(["User"]).var()
+
+    recommended_variances_differences = (recommended_variances["PosttestCorrectRel"] - recommended_variances["PretestCorrectRel"]).to_numpy()
+    unrecommended_variances_differences = (unrecommended_variances["PosttestCorrectRel"] - unrecommended_variances["PretestCorrectRel"]).to_numpy()
+
+    # A) Graphical Evaluation (Distribution)
+    render_comparison_histogram(
+        a=recommended_variances_differences,
+        b=unrecommended_variances_differences,
+        a_name="Recommended",b_name="Unrecommended", x_label="Variance", filename=f"main_histogram_user_variance")
+
+    # C) Hypothesis Test
+    # Null hypothesis: recommended and unrecommended changes in variance are equal
+    t_test_result = mannwhitneyu(
+        recommended_variances_differences,
+        unrecommended_variances_differences,
+        # Alternative: the distribution underlying the recommendation is stochastically less than the distribution underlying unrecommended
         alternative='less'
     )
 
-    return t_test_result, calculate_cohends_d(recommended_diff, unrecommended_diff)
-
+    return t_test_result, calculate_cohends_d(recommended_variances_differences, unrecommended_variances_differences)
 
 recommended, unrecommended = prepare_data()
-render_skill_distributions(recommended, unrecommended)
+pre_test_correct_rel_test(recommended=recommended, unrecommended=unrecommended)
 
-improv_t_res, improv_cohens = first_t_test(recommended, unrecommended)
-normalized_t_res, normalized_cohens = second_t_test(recommended, unrecommended)
-difference_t_res, difference_cohens = third_t_test(recommended, unrecommended)
+improv_t_res, improv_cohens = test_improvement_abs(recommended, unrecommended)
+normalized_t_res, normalized_cohens = test_improvement_normalized_change(recommended, unrecommended)
+smaller_t_res = test_smaller_recommendation_variances(recommended=recommended, unrecommended=unrecommended)
+reduced_t_res, reduced_cohens =test_reduced_recommendation_variances(recommended=recommended, unrecommended=unrecommended)
 
 data = pd.DataFrame({
-    'type' : ["improvement_abs", "normalized_change", "difference"], 
-    't' : [improv_t_res.statistic, normalized_t_res.statistic, difference_t_res.statistic],
-    'p': [improv_t_res.pvalue, normalized_t_res.pvalue, difference_t_res.pvalue],
-    'cohens': [improv_cohens, normalized_cohens, difference_cohens]
+    'type' : ["improvement_abs", "normalized_change", "smaller_variance", "reduced_variance"], 
+    't' : [improv_t_res.statistic, normalized_t_res.statistic, smaller_t_res.statistic, reduced_t_res.statistic],
+    'p': [improv_t_res.pvalue, normalized_t_res.pvalue, smaller_t_res.pvalue, reduced_t_res.pvalue],
+    'cohens': [improv_cohens, normalized_cohens,"",reduced_cohens]
 })
+
 data.to_csv(f"results/main_evaluation.csv", index=None)
-
-
-render_boxplot(
-    recommended["NormalizedChange"].to_numpy(),
-    unrecommended["NormalizedChange"].to_numpy(),
-    "mainstudy_normalized_change_boxplot",
-    ["Recommendation System", "No recommendations"],
-    title="Normalized Change"
-)

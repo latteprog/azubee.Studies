@@ -1,6 +1,6 @@
 import pandas as pd
 from scipy.stats import ttest_rel
-from util import calculate_cohends_d, render_boxplot
+from util import calculate_cohends_d, render_boxplot, render_comparison_histogram
 
 # Exercise 1 : it-network-plan-vlan
 # Exercise 2 : it-network-plan-ipv4-static-routing
@@ -25,9 +25,19 @@ def prepare_data():
 
     return trained, not_trained
 
-def first_t_test(trained, untrained):
-    trained_improvements = trained.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbs"].to_numpy()
-    untrained_improvements = untrained.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbs"].to_numpy()
+def test_improvement_abs_skill(trained, untrained):
+    trained_improvements = trained.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbsNormalizedScores"].to_numpy()
+    untrained_improvements = untrained.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbsNormalizedScores"].to_numpy()
+
+    # A) Graphical Evaluation (Distribution)
+    render_comparison_histogram(
+        a=trained_improvements,
+        b=untrained_improvements,
+        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_abs_skill")
+
+    # B) Analytical Evaluation (Distribution)
+
+    # C) Hypothesis Test
 
     # Null hypothesis: trained and untrained improvements are equally distributed
     t_test_result = ttest_rel(
@@ -39,9 +49,19 @@ def first_t_test(trained, untrained):
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
-def second_t_test(trained, untrained):
-    trained_improvements = trained["ImprovementAbs"].to_numpy()
-    untrained_improvements = untrained["ImprovementAbs"].to_numpy()
+def test_improvement_abs_exercise(trained, untrained):
+    trained_improvements = trained["ImprovementAbsNormalizedScores"].to_numpy()
+    untrained_improvements = untrained["ImprovementAbsNormalizedScores"].to_numpy()
+
+    # A) Graphical Evaluation (Distribution)
+    render_comparison_histogram(
+        a=trained_improvements,
+        b=untrained_improvements,
+        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_abs_exercise")
+
+    # B) Analytical Evaluation (Distribution)
+
+    # C) Hypothesis Test
 
     # Null hypothesis: trained and untrained improvements are equally distributed
     t_test_result = ttest_rel(
@@ -53,10 +73,20 @@ def second_t_test(trained, untrained):
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
-def third_t_test(trained, untrained):
+def test_improvement_normalized_change_skill(trained, untrained):
     trained_improvements = trained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"].to_numpy()
     untrained_improvements = untrained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"].to_numpy()
 
+    # A) Graphical Evaluation (Distribution)
+    render_comparison_histogram(
+        a=trained_improvements,
+        b=untrained_improvements,
+        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_normalized_change_skill")
+
+    # B) Analytical Evaluation (Distribution)
+
+    # C) Hypothesis Test
+
     # Null hypothesis: trained and untrained improvements are equally distributed
     t_test_result = ttest_rel(
         trained_improvements,
@@ -67,9 +97,19 @@ def third_t_test(trained, untrained):
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
-def fourth_t_test(trained, untrained):
+def test_improvement_normalized_change_exercise(trained, untrained):
     trained_improvements = trained["NormalizedChange"].to_numpy()
     untrained_improvements = untrained["NormalizedChange"].to_numpy()
+
+    # A) Graphical Evaluation (Distribution)
+    render_comparison_histogram(
+        a=trained_improvements,
+        b=untrained_improvements,
+        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_normalized_change_exercise")
+
+    # B) Analytical Evaluation (Distribution)
+
+    # C) Hypothesis Test
 
     # Null hypothesis: trained and untrained improvements are equally distributed
     t_test_result = ttest_rel(
@@ -84,10 +124,10 @@ def fourth_t_test(trained, untrained):
 
 trained, untrained = prepare_data()
 
-improv_t_res, improv_cohens = first_t_test(trained, untrained)
-improv_exercise_t_res, improv_exercise_cohens = second_t_test(trained, untrained)
-normalized_t_res, normalized_cohens = third_t_test(trained, untrained)
-normalized_exercise_t_res, normalized_exercise_cohens = fourth_t_test(trained, untrained)
+improv_t_res, improv_cohens = test_improvement_abs_skill(trained, untrained)
+improv_exercise_t_res, improv_exercise_cohens = test_improvement_abs_exercise(trained, untrained)
+normalized_t_res, normalized_cohens = test_improvement_normalized_change_skill(trained, untrained)
+normalized_exercise_t_res, normalized_exercise_cohens = test_improvement_normalized_change_exercise(trained, untrained)
 
 
 data = pd.DataFrame({
@@ -101,7 +141,7 @@ data.to_csv(f"results/pre_evaluation.csv", index=None)
 render_boxplot(
     trained["NormalizedChange"],
     untrained["NormalizedChange"],
-    "prestudy_normalized_change_boxplot",
+    "pre_boxplot_normalized_change",
     ["Trained Skills", "Untrained Skills"],
     title="Normalized Change"
 )
