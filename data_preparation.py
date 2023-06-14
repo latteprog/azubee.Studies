@@ -112,12 +112,12 @@ def preprocess_evaluation(study_name, skills):
         b=data["PosttestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"],
         a_name="Pre (Routing)",b_name="Post (Routing)", x_label="Score", filename=f"{study_name}_histogram_it-network-plan-ipv4-static-routing_relative")
     
-    ### Relative Score Histogram (Routing)
+    ### Relative Score Histogram (Addressing)
     if study_name == "main":
         render_comparison_histogram(
             a=data["PretestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-addressing"],
             b=data["PosttestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-addressing"],
-            a_name="Pre (Routing)",b_name="Post (Routing)", x_label="Score", filename=f"{study_name}_histogram_it-network-plan-ipv4-addressing_relative")
+            a_name="Pre (Addressing)",b_name="Post (Addressing)", x_label="Score", filename=f"{study_name}_histogram_it-network-plan-ipv4-addressing_relative")
     
     ## Normalized Change Histogram
     render_comparison_histogram(
