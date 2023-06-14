@@ -85,6 +85,7 @@ def test_improvement_normalized_change(recommended, unrecommended):
 
     return t_test_result, calculate_cohends_d(recommended_normalized_change, unrecommended_normalized_change)
 
+# This tests the overall group variance, not necessary insightful for "silowissen" for a single user
 def test_smaller_recommendation_variances(recommended, unrecommended):
     # Group By Skill
     recommended_by_exercise = recommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"].to_numpy()
@@ -112,6 +113,27 @@ def test_smaller_recommendation_variances(recommended, unrecommended):
     return t_test_result
 
 def test_reduced_recommendation_variances(recommended, unrecommended):
+    recommended_variances = recommended.groupby(["User"]).var()["PosttestCorrectRel"].to_numpy()
+    unrecommended_variances = unrecommended.groupby(["User"]).var()["PosttestCorrectRel"].to_numpy()
+
+    # A) Graphical Evaluation (Distribution)
+    render_comparison_histogram(
+        a=recommended_variances,
+        b=unrecommended_variances,
+        a_name="Recommended",b_name="Unrecommended", x_label="Variance", filename=f"main_histogram_user_variance")
+
+    # C) Hypothesis Test
+    # Null hypothesis: recommended and unrecommended changes in variance are equal
+    t_test_result = mannwhitneyu(
+        recommended_variances,
+        unrecommended_variances,
+        # Alternative: the distribution underlying the recommendation is stochastically less than the distribution underlying unrecommended
+        alternative='less'
+    )
+
+    return t_test_result, calculate_cohends_d(recommended_variances, unrecommended_variances)
+
+def test_reduced_recommendation_variances_difference(recommended, unrecommended):
     recommended_variances = recommended.groupby(["User"]).var()
     unrecommended_variances = unrecommended.groupby(["User"]).var()
 
@@ -122,7 +144,7 @@ def test_reduced_recommendation_variances(recommended, unrecommended):
     render_comparison_histogram(
         a=recommended_variances_differences,
         b=unrecommended_variances_differences,
-        a_name="Recommended",b_name="Unrecommended", x_label="Variance", filename=f"main_histogram_user_variance")
+        a_name="Recommended",b_name="Unrecommended", x_label="Variance", filename=f"main_histogram_user_variance_difference")
 
     # C) Hypothesis Test
     # Null hypothesis: recommended and unrecommended changes in variance are equal
@@ -141,13 +163,14 @@ pre_test_correct_rel_test(recommended=recommended, unrecommended=unrecommended)
 improv_t_res, improv_cohens = test_improvement_abs(recommended, unrecommended)
 normalized_t_res, normalized_cohens = test_improvement_normalized_change(recommended, unrecommended)
 smaller_t_res = test_smaller_recommendation_variances(recommended=recommended, unrecommended=unrecommended)
-reduced_t_res, reduced_cohens =test_reduced_recommendation_variances(recommended=recommended, unrecommended=unrecommended)
+variance_t_res, variance_cohens = test_reduced_recommendation_variances(recommended=recommended, unrecommended=unrecommended)
+reduced_t_res, reduced_cohens = test_reduced_recommendation_variances_difference(recommended=recommended, unrecommended=unrecommended)
 
 data = pd.DataFrame({
-    'type' : ["improvement_abs", "normalized_change", "smaller_variance", "reduced_variance"], 
-    't' : [improv_t_res.statistic, normalized_t_res.statistic, smaller_t_res.statistic, reduced_t_res.statistic],
-    'p': [improv_t_res.pvalue, normalized_t_res.pvalue, smaller_t_res.pvalue, reduced_t_res.pvalue],
-    'cohens': [improv_cohens, normalized_cohens,"",reduced_cohens]
+    'type' : ["improvement_abs", "normalized_change", "smaller_variance", "reduced_variance", "variance"], 
+    't' : [improv_t_res.statistic, normalized_t_res.statistic, smaller_t_res.statistic, reduced_t_res.statistic, variance_t_res.statistic],
+    'p': [improv_t_res.pvalue, normalized_t_res.pvalue, smaller_t_res.pvalue, reduced_t_res.pvalue, variance_t_res.pvalue],
+    'cohens': [improv_cohens, normalized_cohens,"",reduced_cohens, variance_cohens]
 })
 
 data.to_csv(f"results/main_evaluation.csv", index=None)
