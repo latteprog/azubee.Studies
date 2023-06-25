@@ -105,27 +105,43 @@ def preprocess_evaluation(study_name, skills):
     # Plot Some Histograms
 
     ## Relative Score Histogram
-    render_comparison_histogram(a=data["PretestCorrectRel"],b=data["PosttestCorrectRel"],a_name="Pre",b_name="Post", x_label="Score", filename=f"{study_name}_histogram_all_relative")
-    render_comparison_histogram(a=normalize_scores(data["PretestCorrectRel"]),b=normalize_scores(data["PosttestCorrectRel"]),a_name="Pre",b_name="Post", x_label="Score", filename=f"{study_name}_histogram_all_relative_normalized")
+    render_comparison_histogram(
+        a=data["PretestCorrectRel"],
+        b=data["PosttestCorrectRel"],
+        a_name="Pre",b_name="Post", x_label="Score", 
+        filename=f"data/{study_name}/histogram_all_relative"
+    )
+    render_comparison_histogram(
+        a=normalize_scores(data["PretestCorrectRel"]),
+        b=normalize_scores(data["PosttestCorrectRel"]),
+        a_name="Pre",b_name="Post", x_label="Score", 
+        filename=f"data/{study_name}/histogram_all_relative_normalized"
+    )
 
     ### Relative Score Histogram (VLAN)
     render_comparison_histogram(
         a=data["PretestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-vlan"],
         b=data["PosttestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-vlan"],
-        a_name="Pre (VLAN)",b_name="Post (VLAN)", x_label="Score", filename=f"{study_name}_histogram_it-network-plan-vlan_relative")
+        a_name="Pre (VLAN)",b_name="Post (VLAN)", x_label="Score", 
+        filename=f"data/{study_name}/histogram_it-network-plan-vlan_relative"
+    )
     
     ### Relative Score Histogram (Routing)
     render_comparison_histogram(
         a=data["PretestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"],
         b=data["PosttestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"],
-        a_name="Pre (Routing)",b_name="Post (Routing)", x_label="Score", filename=f"{study_name}_histogram_it-network-plan-ipv4-static-routing_relative")
+        a_name="Pre (Routing)",b_name="Post (Routing)", x_label="Score", 
+        filename=f"data/{study_name}/histogram_it-network-plan-ipv4-static-routing_relative"
+    )
     
     ### Relative Score Histogram (Addressing)
     if study_name == "main":
         render_comparison_histogram(
             a=data["PretestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-addressing"],
             b=data["PosttestCorrectRel"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-addressing"],
-            a_name="Pre (Addressing)",b_name="Post (Addressing)", x_label="Score", filename=f"{study_name}_histogram_it-network-plan-ipv4-addressing_relative")
+            a_name="Pre (Addressing)",b_name="Post (Addressing)", x_label="Score", 
+            filename=f"data/{study_name}/histogram_it-network-plan-ipv4-addressing_relative"
+        )
     
     ## Normalized Change Histogram
     if study_name == "main":
@@ -136,7 +152,7 @@ def preprocess_evaluation(study_name, skills):
                 {"name": "IPv4 Addressing", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-addressing"]}
             ],
             x_label="Normalized Change",
-            filename=f"{study_name}_histogram_normalized_change"
+            filename=f"data/{study_name}/histogram_normalized_change"
         )
     else:
         render_comparison_histograms(
@@ -145,11 +161,16 @@ def preprocess_evaluation(study_name, skills):
                 {"name": "IPv4 Routing", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"]}
             ],
             x_label="Normalized Change",
-            filename=f"{study_name}_histogram_normalized_change"
+            filename=f"data/{study_name}/histogram_normalized_change"
         )
         
     ## Absolute Improvement Histogram
-    render_comparison_histogram(a=data["ImprovementAbs"],b=data["ImprovementAbsNormalizedScores"],a_name="Abs",b_name="Normalized", x_label="Improvement", filename=f"{study_name}_histogram_improvement")
+    render_comparison_histogram(
+        a=data["ImprovementAbs"],
+        b=data["ImprovementAbsNormalizedScores"],
+        a_name="Abs", b_name="Normalized", x_label="Improvement", 
+        filename=f"data/{study_name}/histogram_improvement"
+    )
     
     data.to_csv(f"preprocessed/{study_name}_preprocessed.csv", index=None)
 

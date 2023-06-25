@@ -1,0 +1,117 @@
+[
+  {
+    "userId": "2ff4feb9-d00e-4256-9027-b725c495b7ce",
+    "skillId": "it-network-plan",
+    "mastery": 0.3700029227559602
+  },
+  {
+    "userId": "2ff4feb9-d00e-4256-9027-b725c495b7ce",
+    "skillId": "it-network-plan-vlan",
+    "mastery": 0.533099343932052
+  },
+  {
+    "userId": "5ce05f3f-26fc-48e8-b97b-a2cbfda2143b",
+    "skillId": "it-network-plan-ipv4-static-routing",
+    "mastery": 0.9237984849552656
+  },
+  {
+    "userId": "5ce05f3f-26fc-48e8-b97b-a2cbfda2143b",
+    "skillId": "it-network-plan",
+    "mastery": 0.47760779245884455
+  },
+  {
+    "userId": "8915cb66-2bdc-4eb2-8fae-c61e42b2bf31",
+    "skillId": "it-network-plan-ipv4-inter-vlan-routing",
+    "mastery": 0.22896813757645662
+  },
+  {
+    "userId": "8915cb66-2bdc-4eb2-8fae-c61e42b2bf31",
+    "skillId": "it-network-plan-vlan",
+    "mastery": 0.5492025451915501
+  },
+  {
+    "userId": "8915cb66-2bdc-4eb2-8fae-c61e42b2bf31",
+    "skillId": "it-network-plan-ipv4-addressing",
+    "mastery": 0.27911974163950076
+  },
+  {
+    "userId": "8915cb66-2bdc-4eb2-8fae-c61e42b2bf31",
+    "skillId": "it-network-plan",
+    "mastery": 0.2800695185359902
+  },
+  {
+    "userId": "8915cb66-2bdc-4eb2-8fae-c61e42b2bf31",
+    "skillId": "it-network-plan-ipv4-static-routing",
+    "mastery": 0.04782711688599308
+  },
+  {
+    "userId": "a5ebc6c1-d53b-440c-9243-a9b06f0fd6a5",
+    "skillId": "it-network-plan-ipv4-addressing",
+    "mastery": 0.4125855539582793
+  },
+  {
+    "userId": "a5ebc6c1-d53b-440c-9243-a9b06f0fd6a5",
+    "skillId": "it-network-plan",
+    "mastery": 0.6380216899018691
+  },
+  {
+    "userId": "c84a25b3-befc-4680-9f07-38e9fb387d49",
+    "skillId": "it-network-plan-vlan",
+    "mastery": 0.3062787740879126
+  },
+  {
+    "userId": "c84a25b3-befc-4680-9f07-38e9fb387d49",
+    "skillId": "it-network-plan-ipv4-addressing",
+    "mastery": 0.5470649848460302
+  },
+  {
+    "userId": "c84a25b3-befc-4680-9f07-38e9fb387d49",
+    "skillId": "it-network-plan-ipv4-static-routing",
+    "mastery": 0.5449737770276603
+  },
+  {
+    "userId": "c84a25b3-befc-4680-9f07-38e9fb387d49",
+    "skillId": "it-network-plan",
+    "mastery": 0.5393369936579451
+  },
+  {
+    "userId": "e89ad72d-c9d7-4da8-bb5f-44d5c182d574",
+    "skillId": "it-network-plan-ipv4-static-routing",
+    "mastery": 0.47760779245884455
+  },
+  {
+    "userId": "e89ad72d-c9d7-4da8-bb5f-44d5c182d574",
+    "skillId": "it-network-plan-vlan",
+    "mastery": 0.4503460122222034
+  },
+  {
+    "userId": "e89ad72d-c9d7-4da8-bb5f-44d5c182d574",
+    "skillId": "it-network-plan",
+    "mastery": 0.5373904724156399
+  },
+  {
+    "userId": "afe3ee14-2243-4133-83b5-4f7ff6aafd78",
+    "skillId": "it-network-plan-ipv4-static-routing",
+    "mastery": 0.5589385879539764
+  },
+  {
+    "userId": "afe3ee14-2243-4133-83b5-4f7ff6aafd78",
+    "skillId": "it-network-plan-vlan",
+    "mastery": 0.24039667482360602
+  },
+  {
+    "userId": "afe3ee14-2243-4133-83b5-4f7ff6aafd78",
+    "skillId": "it-network-plan",
+    "mastery": 0.559737005206664
+  },
+  {
+    "userId": "db768729-0b97-4b83-9931-2568dda9c624",
+    "skillId": "it-network-plan",
+    "mastery": 0.535137581830936
+  },
+  {
+    "userId": "db768729-0b97-4b83-9931-2568dda9c624",
+    "skillId": "it-network-plan-vlan",
+    "mastery": 0.5914293570367579
+  }
+]

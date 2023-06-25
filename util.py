@@ -2,7 +2,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from scipy.stats import ttest_rel, shapiro, wilcoxon
+from scipy.stats import ttest_rel, ttest_ind, shapiro, wilcoxon, mannwhitneyu
 from math import sqrt
 from statistics import mean, stdev
 
@@ -52,12 +52,37 @@ def render_comparison_histograms(data_list, x_label, filename):
     plt.tight_layout()
     plt.savefig(f"img/{filename}.png")
     plt.close()
+    
+def plot_pre_post(df, filename, title):
+    plt.figure(figsize=(10, 6))
+
+    # We set the width of a bar and its positions
+    width = 0.3
+    r1 = range(len(df))
+    r2 = [x + width for x in r1]
+
+    plt.bar(r1, df['PretestCorrectRel'], color='b', width=width, edgecolor='grey', label='PretestCorrectRel')
+    plt.bar(r2, df['PosttestCorrectRel'], color='r', width=width, edgecolor='grey', label='PosttestCorrectRel')
+
+    # Adding xticks
+    plt.xlabel('Exercise Skill', fontweight='bold')
+    plt.ylabel('Relative Score (in %)', fontweight='bold')
+    plt.title(title)
+    plt.xticks([r + width / 2 for r in range(len(df))], df['ExerciseSkill'])
+
+    plt.legend()
+    plt.savefig(f"img/{filename}.png")
+    plt.close()
 
 def calculate_cohends_d(dist_1, dist_2):
-    return (mean(dist_1) - mean(dist_2)) / (sqrt((stdev(dist_1) ** 2 + stdev(dist_2) ** 2) / 2))
+    n1, n2 = len(dist_1), len(dist_2)
+    s1, s2 = stdev(dist_1), stdev(dist_2)
+    x1, x2 = mean(dist_1), mean(dist_2)
 
+    pooled_std = sqrt(((n1 - 1) * s1**2 + (n2 - 1) * s2**2) / (n1 + n2 - 2))
+    return (x1 - x2) / pooled_std
 
-def perform_test(a, b, a_name, b_name, x_label, filename, is_graph_norm, norm_val=0.05, alternative='greater'):
+def perform_test(a, b, a_name, b_name, x_label, filename, is_related, is_graph_norm, norm_val=0.05, alternative='greater'):
     # A) Graphical Evaluation (Distribution)
     render_comparison_histogram(
         a=a,
@@ -70,22 +95,36 @@ def perform_test(a, b, a_name, b_name, x_label, filename, is_graph_norm, norm_va
 
     # C) Hypothesis Test
     if is_graph_norm and norm_p_a <= norm_val and norm_p_b <= norm_val:
-        print(f"Using a related t-test as normality assumptions are met for {filename} with {norm_p_a} and {norm_p_b}.")
-        
-        t_test_result = ttest_rel(
-            a,
-            b,
-            alternative=alternative
-        )
+        if is_related:
+            print(f"Using a paired t-test as normality assumptions are met for {filename} with {norm_p_a} and {norm_p_b}.")
+            t_test_result = ttest_rel(
+                a,
+                b,
+                alternative=alternative
+            )
+        else:
+            print(f"Using a t-test as normality assumptions are met for {filename} with {norm_p_a} and {norm_p_b}.")
+            t_test_result = ttest_ind(
+                a,
+                b,
+                alternative=alternative
+            )
     else: 
-        print(f"Using a wilcoxon test as normality assumptions are not met for {filename} with {is_graph_norm} and {norm_p_a} and {norm_p_b}.")
-
-        t_test_result = wilcoxon(
-            a, 
-            b,
-            alternative=alternative#,
-            # https://www.tandfonline.com/doi/abs/10.1080/01621459.1959.10501526
-            #zero_method='pratt'
-        )
+        if is_related:
+            print(f"Using a wilcoxon test as normality assumptions are not met for {filename} with {is_graph_norm} and {norm_p_a} and {norm_p_b}.")
+            t_test_result = wilcoxon(
+                a, 
+                b,
+                alternative=alternative,
+                # https://www.tandfonline.com/doi/abs/10.1080/01621459.1959.10501526
+                zero_method='pratt'
+            )
+        else:
+            print(f"Using a mannwhitneyu test as normality assumptions are not met for {filename} with {is_graph_norm} and {norm_p_a} and {norm_p_b}.")
+            t_test_result = mannwhitneyu(
+                a, 
+                b,
+                alternative=alternative
+            )
 
     return t_test_result

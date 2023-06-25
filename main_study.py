@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
-from scipy.stats import ttest_ind, levene, mannwhitneyu
-from util import render_comparison_histogram, calculate_cohends_d
+from util import render_comparison_histogram, calculate_cohends_d, perform_test, plot_pre_post, render_boxplot
+from scipy.stats import levene, f
+import matplotlib.pyplot as plt
 
+plt.legend()
 # Exercise 1 : it-network-plan-vlan
 # Exercise 2 : it-network-plan-ipv4-static-routing
 # Exercise 3 : it-network-plan-ipv4-addressing
@@ -21,106 +23,148 @@ def extract_entries(df: pd.DataFrame, was_recommended: bool):
 
 def prepare_data():
     data = pd.read_csv("preprocessed/main_preprocessed.csv")
+    
+    for student in data["User"].unique():
+        # Assuming student is defined
+        df = data.loc[data["User"] == student][["ExerciseSkill","PretestCorrectRel","PosttestCorrectRel"]].groupby("ExerciseSkill").mean()
+        df.reset_index(inplace=True)
+
+        plot_pre_post(df=df, filename=f"main/barplots/scores_{int(student)}", title=f'Scores for User: {int(student)}')
 
     recommended = extract_entries(df=data, was_recommended=True)
     unrecommended = extract_entries(df=data, was_recommended=False)
 
     return recommended, unrecommended
 
-def pre_test_correct_rel_test(recommended, unrecommended):
+def test_comparison_graphs(recommended, unrecommended):
     recommended_pretest = recommended.groupby(["User", "ExerciseSkill"]).mean()["PretestCorrectRel"].to_numpy()
     recommended_posttest = recommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"].to_numpy()
+    recommended_pre_std = recommended.groupby(["User", "ExerciseSkill"]).mean().groupby(["User"]).std()["PretestCorrectRel"].to_numpy()
+    recommended_post_std = recommended.groupby(["User", "ExerciseSkill"]).mean().groupby(["User"]).std()["PosttestCorrectRel"].to_numpy()
 
     unrecommended_pretest = unrecommended.groupby(["User", "ExerciseSkill"]).mean()["PretestCorrectRel"].to_numpy()
     unrecommended_posttest = unrecommended.groupby(["User", "ExerciseSkill"]).mean()["PosttestCorrectRel"].to_numpy()
+    unrecommended_pre_std = unrecommended.groupby(["User", "ExerciseSkill"]).mean().groupby(["User"]).std()["PretestCorrectRel"].to_numpy()
+    unrecommended_post_std = unrecommended.groupby(["User", "ExerciseSkill"]).mean().groupby(["User"]).std()["PosttestCorrectRel"].to_numpy()
 
     # Graphical Evaluation
-    render_comparison_histogram(a=recommended_pretest, b=unrecommended_pretest,a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_comparison_pre_scores")
-    render_comparison_histogram(a=recommended_posttest, b=unrecommended_posttest,a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_comparison_post_scores")
+    render_comparison_histogram(a=recommended_pretest, b=unrecommended_pretest,a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main/histograms/comparison_pre_scores")
+    render_comparison_histogram(a=recommended_posttest, b=unrecommended_posttest,a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main/histograms/comparison_post_scores")
+    render_comparison_histogram(a=recommended_pre_std, b=unrecommended_pre_std,a_name="Recommended",b_name="Unrecommended", x_label="Standard Deviation", filename=f"main/histograms/comparison_pre_scores_std")
+    render_comparison_histogram(a=recommended_post_std, b=unrecommended_post_std,a_name="Recommended",b_name="Unrecommended", x_label="Standard Deviation", filename=f"main/histograms/comparison_post_scores_std")
+        
+def test_improvement_abs(recommended, unrecommended, is_graph_norm, norm_val=0.05):
+    """
+    Function to calculate if, and how significant the learning improvement for the group using the recommendation system was, relative to the group manually selecting trained skills.
+    The is_graph_norm is an indicator, if both distributions within the improvement_abs_skills.png file are a normal distribution.
+    This decides the statistical test used for evaluation.
+    """
+    recommended_improvements = recommended.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbsNormalizedScores"].to_numpy()
+    unrecommended_improvements = unrecommended.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbsNormalizedScores"].to_numpy()
 
-def test_improvement_abs(recommended, unrecommended):
-    recommended_improvements = (recommended.loc[recommended["ExerciseSkill"] != "it-network-plan-ipv4-addressing"])["ImprovementAbsNormalizedScores"].to_numpy()
-    unrecommended_improvements = (unrecommended.loc[unrecommended["ExerciseSkill"] != "it-network-plan-ipv4-addressing"])["ImprovementAbsNormalizedScores"].to_numpy()
-
-    # A) Graphical Evaluation
-    render_comparison_histogram(
+    t_test_result = perform_test(
+        is_related=False,
         a=recommended_improvements,
         b=unrecommended_improvements,
-        a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_improvement_abs")
-
-    # B) Analytical Evaluation (Distribution)
-
-    # C) Hypothesis Test
-
-    # Null hypothesis: recommended and unrecommended improvements are equally distributed
-    t_test_result = ttest_ind(
-        recommended_improvements,
-        unrecommended_improvements,
-        # Alternative: mean of the first is greater than mean of the second distribution
+        a_name="Recommended",b_name="Unrecommended", x_label="Score",
+        filename=f"main/histograms/improvement_abs_skills",
+        is_graph_norm=is_graph_norm, norm_val=norm_val,
+        # Alternative : The learning improvement of the recommended group is greater than the one of the unrecommended group
         alternative='greater'
     )
 
     return t_test_result, calculate_cohends_d(recommended_improvements, unrecommended_improvements)
 
-def test_improvement_normalized_change(recommended, unrecommended):
-    recommended_normalized_change = (recommended.loc[recommended["ExerciseSkill"] != "it-network-plan-ipv4-addressing"])["NormalizedChange"].to_numpy()
-    unrecommended_normalized_change = (unrecommended.loc[unrecommended["ExerciseSkill"] != "it-network-plan-ipv4-addressing"])["NormalizedChange"].to_numpy()
+def test_improvement_normalized_change_skills(recommended, unrecommended, is_graph_norm, norm_val=0.05):
+    """
+    Function to calculate if, and how significant the learning improvement for the group using the recommendation system was, relative to the group manually selecting trained skills.
+    The is_graph_norm is an indicator, if both distributions within the improvement_normalized_change_skills.png file are a normal distribution.
+    This decides the statistical test used for evaluation.
+    """
+    recommended_improvements = recommended.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"].to_numpy()
+    unrecommended_improvements = unrecommended.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"].to_numpy()
 
-    # A) Graphical Evaluation (Distribution)
-    render_comparison_histogram(
-        a=recommended_normalized_change,
-        b=unrecommended_normalized_change,
-        a_name="Recommended",b_name="Unrecommended", x_label="Score", filename=f"main_histogram_improvement_normalized_change")
+    t_test_result = perform_test(
+        is_related=False,
+        a=recommended_improvements,
+        b=unrecommended_improvements,
+        a_name="Recommended",b_name="Unrecommended", x_label="Score",
+        filename=f"main/histograms/improvement_normalized_change_skills",
+        is_graph_norm=is_graph_norm, norm_val=norm_val,
+        # Alternative : The learning improvement of the recommended group is greater than the one of the unrecommended group
+        alternative='greater'
+    )
+    
+    return t_test_result, calculate_cohends_d(recommended_improvements, unrecommended_improvements)
 
-    # B) Analytical Evaluation (Distribution)
+def test_improvement_normalized_change_users(recommended, unrecommended, is_graph_norm, norm_val=0.05):
+    """
+    Function to calculate if, and how significant the learning improvement for the group using the recommendation system was, relative to the group manually selecting trained skills.
+    The is_graph_norm is an indicator, if both distributions within the improvement_normalized_change_users.png file are a normal distribution.
+    This decides the statistical test used for evaluation.
+    """
+    recommended_improvements = recommended.groupby(["User"]).mean()["NormalizedChange"].to_numpy()
+    unrecommended_improvements = unrecommended.groupby(["User"]).mean()["NormalizedChange"].to_numpy()
 
-    # C) Hypothesis Test
-    # Null hypothesis: recommended and unrecommended normalized change equally distributed (learning improvement)
-    t_test_result = ttest_ind(
-        recommended_normalized_change,
-        unrecommended_normalized_change,
-        # Alternative: mean of the first is greater than mean of the second distribution
+    t_test_result = perform_test(
+        is_related=False,
+        a=recommended_improvements,
+        b=unrecommended_improvements,
+        a_name="Recommended",b_name="Unrecommended", x_label="Score",
+        filename=f"main/histograms/improvement_normalized_change_users",
+        is_graph_norm=is_graph_norm, norm_val=norm_val,
+        # Alternative : The learning improvement of the recommended group is greater than the one of the unrecommended group
+        alternative='greater'
+    )
+    
+    return t_test_result, calculate_cohends_d(recommended_improvements, unrecommended_improvements)
+
+def test_reduced_recommendation_deviation_difference(recommended, unrecommended, is_graph_norm, norm_val=0.05):
+    """
+    Function to calculate if, and how significant the reduction of deviation within the skills for users for the group using the recommendation system was, relative to the group manually selecting trained skills.
+    The is_graph_norm is an indicator, if both distributions within the user_deviation_difference.png file are a normal distribution.
+    This decides the statistical test used for evaluation.
+    """
+    recommended_vals = recommended[["User","PretestCorrectRel","PosttestCorrectRel"]].groupby(["User"]).std()
+    unrecommended_vals = unrecommended[["User","PretestCorrectRel","PosttestCorrectRel"]].groupby(["User"]).std()
+    
+    recommended_differences = (recommended_vals["PretestCorrectRel"] - recommended_vals["PosttestCorrectRel"]).to_numpy()
+    unrecommended_differences = (unrecommended_vals["PretestCorrectRel"] - unrecommended_vals["PosttestCorrectRel"]).to_numpy()
+
+    t_test_result = perform_test(
+        is_related=False,
+        a=recommended_differences,
+        b=unrecommended_differences,
+        a_name="Recommended",b_name="Unrecommended", x_label="Standard Deviation",
+        filename=f"main/histograms/user_deviation_difference",
+        is_graph_norm=is_graph_norm, norm_val=norm_val,
+        # Alternative : The reduction in standard deviation for users of the recommended group was greater than the for users of the unrecommended group
         alternative='greater'
     )
 
-    return t_test_result, calculate_cohends_d(recommended_normalized_change, unrecommended_normalized_change)
-
-def test_reduced_recommendation_deviation_difference(recommended, unrecommended):
-    recommended_vals = recommended.where(recommended["ExerciseSkill"] != "it-network-plan-ipv4-addressing").groupby(["User", "ExerciseSkill"]).mean().groupby(["User"]).std()
-    unrecommended_vals = unrecommended.where(unrecommended["ExerciseSkill"] != "it-network-plan-ipv4-addressing").groupby(["User", "ExerciseSkill"]).mean().groupby(["User"]).std()
-
-    recommended_differences = (recommended_vals["PosttestCorrectRel"] - recommended_vals["PretestCorrectRel"]).to_numpy()
-    unrecommended_differences = (unrecommended_vals["PosttestCorrectRel"] - unrecommended_vals["PretestCorrectRel"]).to_numpy()
-
-    # A) Graphical Evaluation (Distribution)
-    render_comparison_histogram(
-        a=recommended_differences,
-        b=unrecommended_differences,
-        a_name="Recommended",b_name="Unrecommended", x_label="Variance", filename=f"main_histogram_user_variance_difference")
-
-    # C) Hypothesis Test
-    # Null hypothesis: recommended and unrecommended changes in variance are equal
-    t_test_result = mannwhitneyu(
-        recommended_differences,
-        unrecommended_differences,
-        # Alternative: the distribution underlying the recommendation is stochastically less than the distribution underlying unrecommended
-        alternative='less'
-    )
-
-    return t_test_result, calculate_cohends_d(unrecommended_differences, unrecommended_differences)
+    return t_test_result, calculate_cohends_d(recommended_differences, unrecommended_differences)
 
 recommended, unrecommended = prepare_data()
-pre_test_correct_rel_test(recommended=recommended, unrecommended=unrecommended)
+test_comparison_graphs(recommended=recommended, unrecommended=unrecommended)
 
-improv_t_res, improv_cohens = test_improvement_abs(recommended, unrecommended)
-normalized_t_res, normalized_cohens = test_improvement_normalized_change(recommended, unrecommended)
-reduced_t_res, reduced_cohens = test_reduced_recommendation_deviation_difference(recommended=recommended, unrecommended=unrecommended)
+improv_t_res, improv_cohens = test_improvement_abs(recommended, unrecommended, is_graph_norm=False, norm_val=0.05)
+normalized_skills_t_res, normalized_skills_cohens = test_improvement_normalized_change_skills(recommended, unrecommended, is_graph_norm=False, norm_val=0.05)
+normalized_users_t_res, normalized_users_cohens = test_improvement_normalized_change_users(recommended, unrecommended, is_graph_norm=False, norm_val=0.05)
+reduced_t_res, reduced_cohens = test_reduced_recommendation_deviation_difference(recommended=recommended, unrecommended=unrecommended, is_graph_norm=False, norm_val=0.05)
 
 data = pd.DataFrame({
-    'type' : ["improvement_abs", "normalized_change", "reduced_deviation"], 
-    't' : [improv_t_res.statistic, normalized_t_res.statistic, reduced_t_res.statistic],
-    'p': [improv_t_res.pvalue, normalized_t_res.pvalue,  reduced_t_res.pvalue],
-    'cohens': [improv_cohens, normalized_cohens, reduced_cohens]
+    'type' : ["improvement_abs", "normalized_change_skills", "normalized_change_user", "reduced_deviation"], 
+    't' : [improv_t_res.statistic, normalized_skills_t_res.statistic, normalized_users_t_res.statistic, reduced_t_res.statistic],
+    'p': [improv_t_res.pvalue, normalized_skills_t_res.pvalue, normalized_users_t_res.pvalue, reduced_t_res.pvalue],
+    'cohens': [improv_cohens, normalized_skills_cohens, normalized_users_cohens, reduced_cohens]
 })
 
 data.to_csv(f"results/main_evaluation.csv", index=None)
+
+render_boxplot(
+    recommended.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
+    unrecommended.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
+    "main/boxplot_normalized_change",
+    ["Recommended", "Unrecommended"],
+    title="Normalized Change"
+)
