@@ -103,8 +103,8 @@ def test_improvement_normalized_change_users(recommended, unrecommended, is_grap
     The is_graph_norm is an indicator, if both distributions within the improvement_normalized_change_users.png file are a normal distribution.
     This decides the statistical test used for evaluation.
     """
-    recommended_improvements = recommended.groupby(["User"]).mean()["NormalizedChange"].to_numpy()
-    unrecommended_improvements = unrecommended.groupby(["User"]).mean()["NormalizedChange"].to_numpy()
+    recommended_improvements = recommended[["User","NormalizedChange"]].groupby(["User"]).mean()["NormalizedChange"].to_numpy()
+    unrecommended_improvements = unrecommended[["User","NormalizedChange"]].groupby(["User"]).mean()["NormalizedChange"].to_numpy()
 
     t_test_result = perform_test(
         is_related=False,
