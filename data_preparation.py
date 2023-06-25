@@ -1,6 +1,30 @@
 import pandas as pd
-import numpy as np
-from util import render_comparison_histogram, normalize_scores
+from util import render_comparison_histogram, render_comparison_histograms, normalize_scores
+
+# Hake, R. R. (1998).
+# https://doi.org/10.1119/1.18809
+def normalized_gain(pretest, posttest):
+    """
+    Function to calculate the normalized gain
+    The pretest and posttest scores are to be provided as percentages (e.g. 0,4 for 40%)
+    """
+    return (posttest - pretest) / (1 - pretest)
+
+# Marx, J. D., & Cummings, K. (2007). Normalized change. American Journal of Physics, 75(1), 87–91.
+# https://doi.org/10.1119/1.2372468
+def normalized_change(pretest, posttest):
+    """
+    Function to calculate the normalized change
+    The pretest and posttest scores are to be provided as percentages (e.g. 0,4 for 40%)
+    """
+    if posttest > pretest:
+        return (posttest - pretest) / (100 - pretest)
+    elif posttest < pretest:
+        return (posttest - pretest) / (pretest)
+    else:
+        # TODO : Drop when post = pre = 100 (or 0)
+        # "In the [perfect score] case we argue that this student’s scores should be removed from the data sets because the student’s performance is beyond the scope of the measurement instrument"
+        return 0
 
 def build_task_mapping(exercises: pd.DataFrame):
     mapping = dict()
@@ -37,7 +61,6 @@ def extract_data(study_name: str):
     return pretest, posttest, mapping
 
 def preprocess_evaluation(study_name, skills):
-    exercise_skill_scores = {}
     pretest, posttest, mapping = extract_data(study_name)
     data = pd.DataFrame()
     
@@ -53,40 +76,25 @@ def preprocess_evaluation(study_name, skills):
 
         # A) Relative Correctness of the exercise within the initial test
         pre_max_points = mapping[1][exercise]
-        rel_pre_correct = row["PretestCorrect"] / pre_max_points
+        rel_pre_correct = row["PretestCorrect"] / pre_max_points * 100
         assert rel_pre_correct >= 0
-        assert rel_pre_correct <= 1
+        assert rel_pre_correct <= 100
         data.at[index, "PretestCorrectRel"] = rel_pre_correct
 
         # B) Relative Correctness of the exercise within the post test
         post_max_points = mapping[2][exercise]
-        rel_post_correct = row["PosttestCorrect"] / post_max_points
+        rel_post_correct = row["PosttestCorrect"] / post_max_points * 100
         assert rel_post_correct >= 0
-        assert rel_post_correct <= 1
+        assert rel_post_correct <= 100
         data.at[index, "PosttestCorrectRel"] = rel_post_correct
 
-        # C) Normalized Change (see https://www.physport.org/recommendations/Entry.cfm?ID=93334)
-        if rel_post_correct > rel_pre_correct:
-            data.at[index, "NormalizedChange"] = (rel_post_correct - rel_pre_correct) / (1 - rel_pre_correct)
-        elif rel_post_correct < rel_pre_correct:
-            data.at[index, "NormalizedChange"] = (rel_post_correct - rel_pre_correct) / (rel_pre_correct)
-        else:
-            data.at[index, "NormalizedChange"] = 0
+        # C) Normalized Change 
+        data.at[index, "NormalizedChange"] = normalized_change(pretest=rel_pre_correct, posttest=rel_post_correct)
 
-        ## Store Score
-        if not data.at[index, "ExerciseSkill"] in exercise_skill_scores:
-            exercise_skill_scores[data.at[index, "ExerciseSkill"]] = {
-                "pre" : [],
-                "post": []
-            }
-
-        exercise_skill_scores[data.at[index, "ExerciseSkill"]]["pre"].append(data.at[index, "PretestCorrectRel"])
-        exercise_skill_scores[data.at[index, "ExerciseSkill"]]["post"].append(data.at[index, "PosttestCorrectRel"])
-    
     # D) Absolute Improvement by the difference of relative correctness within post and initial test
     data["ImprovementAbs"] = data["PosttestCorrectRel"] - data["PretestCorrectRel"]
-    assert max(data["ImprovementAbs"]) <= 1
-    assert min(data["ImprovementAbs"]) >= -1
+    assert max(data["ImprovementAbs"]) <= 100
+    assert min(data["ImprovementAbs"]) >= -100
 
     # E) Normalized Scores
     data["NormalizedPosttestCorrectRel"] = normalize_scores(data["PosttestCorrectRel"])
@@ -120,16 +128,30 @@ def preprocess_evaluation(study_name, skills):
             a_name="Pre (Addressing)",b_name="Post (Addressing)", x_label="Score", filename=f"{study_name}_histogram_it-network-plan-ipv4-addressing_relative")
     
     ## Normalized Change Histogram
-    render_comparison_histogram(
-        a=data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-vlan"],
-        b=data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"],
-        a_name="VLAN",b_name="Routing", x_label="Normalized Change", filename=f"{study_name}_histogram_normalized_change")
-    
+    if study_name == "main":
+        render_comparison_histograms(
+            data_list= [
+                {"name": "VLAN", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-vlan"]},
+                {"name": "IPv4 Routing", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"]},
+                {"name": "IPv4 Addressing", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-addressing"]}
+            ],
+            x_label="Normalized Change",
+            filename=f"{study_name}_histogram_normalized_change"
+        )
+    else:
+        render_comparison_histograms(
+            data_list= [
+                {"name": "VLAN", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-vlan"]},
+                {"name": "IPv4 Routing", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"]}
+            ],
+            x_label="Normalized Change",
+            filename=f"{study_name}_histogram_normalized_change"
+        )
+        
     ## Absolute Improvement Histogram
     render_comparison_histogram(a=data["ImprovementAbs"],b=data["ImprovementAbsNormalizedScores"],a_name="Abs",b_name="Normalized", x_label="Improvement", filename=f"{study_name}_histogram_improvement")
     
     data.to_csv(f"preprocessed/{study_name}_preprocessed.csv", index=None)
-
 
 # The pre test where the exercise skill ordering was :
 # vlan, routing, vlan, routing

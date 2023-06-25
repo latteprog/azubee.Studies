@@ -1,6 +1,5 @@
 import pandas as pd
-from scipy.stats import ttest_rel
-from util import calculate_cohends_d, render_boxplot, render_comparison_histogram
+from util import calculate_cohends_d, render_boxplot, perform_test
 
 # Exercise 1 : it-network-plan-vlan
 # Exercise 2 : it-network-plan-ipv4-static-routing
@@ -25,110 +24,88 @@ def prepare_data():
 
     return trained, not_trained
 
-def test_improvement_abs_skill(trained, untrained):
+
+def test_improvement_abs_skill(trained, untrained, is_graph_norm, norm_val=0.05):
+    """
+    Function to calculate if, and how significant the learning improvement for the trained **skills** was, relative to the untrained skills.
+    The is_graph_norm is an indicator, if both distributions within the pre_histogram_improvement_abs_skills.png file are a normal distribution.
+    This decides the statistical test used for evaluation.
+    """
     trained_improvements = trained.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbsNormalizedScores"].to_numpy()
     untrained_improvements = untrained.groupby(["User", "ExerciseSkill"]).mean()["ImprovementAbsNormalizedScores"].to_numpy()
 
-    # A) Graphical Evaluation (Distribution)
-    render_comparison_histogram(
+    t_test_result = perform_test(
         a=trained_improvements,
         b=untrained_improvements,
-        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_abs_skill")
-
-    # B) Analytical Evaluation (Distribution)
-
-    # C) Hypothesis Test
-
-    # Null hypothesis: trained and untrained improvements are equally distributed
-    t_test_result = ttest_rel(
-        trained_improvements,
-        untrained_improvements,
-        # Alternative: mean of the first is greater than mean of the second distribution
-        alternative='greater'
+        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_abs_skills",
+        is_graph_norm=is_graph_norm, norm_val=norm_val
     )
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
-def test_improvement_abs_exercise(trained, untrained):
+def test_improvement_abs_exercise(trained, untrained, is_graph_norm, norm_val=0.05):
+    """
+    Function to calculate if, and how significant the learning improvement for the trained **exercises** was, relative to the untrained exercises.
+    The is_graph_norm is an indicator, if both distributions within the pre_histogram_improvement_abs_exercises.png file are a normal distribution.
+    This decides the statistical test used for evaluation.
+    """
     trained_improvements = trained["ImprovementAbsNormalizedScores"].to_numpy()
     untrained_improvements = untrained["ImprovementAbsNormalizedScores"].to_numpy()
 
-    # A) Graphical Evaluation (Distribution)
-    render_comparison_histogram(
+    t_test_result = perform_test(
         a=trained_improvements,
         b=untrained_improvements,
-        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_abs_exercise")
-
-    # B) Analytical Evaluation (Distribution)
-
-    # C) Hypothesis Test
-
-    # Null hypothesis: trained and untrained improvements are equally distributed
-    t_test_result = ttest_rel(
-        trained_improvements,
-        untrained_improvements,
-        # Alternative: mean of the first is greater than mean of the second distribution
-        alternative='greater'
+        a_name="Trained",b_name="Untrained", x_label="Score", filename="pre_histogram_improvement_abs_exercises",
+        is_graph_norm=is_graph_norm, norm_val=norm_val
     )
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
-def test_improvement_normalized_change_skill(trained, untrained):
-    trained_improvements = trained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"].to_numpy()
-    untrained_improvements = untrained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"].to_numpy()
+def test_improvement_normalized_change_skill(trained, untrained, is_graph_norm, norm_val=0.05):
+    """
+    Function to calculate if, and how significant the learning improvement for the trained **skills** in terms of normalized change was, relative to the untrained skills.
+    The is_graph_norm is an indicator, if both distributions within the pre_histogram_improvement_normalized_change_skills.png file are a normal distribution.
+    This decides the statistical test used for evaluation.
+    """
+    trained_grouped = trained.groupby(["User", "ExerciseSkill"])
+    untrained_grouped = untrained.groupby(["User", "ExerciseSkill"])
 
-    # A) Graphical Evaluation (Distribution)
-    render_comparison_histogram(
+    trained_improvements = trained_grouped.mean()["NormalizedChange"].to_numpy()
+    untrained_improvements = untrained_grouped.mean()["NormalizedChange"].to_numpy()
+
+    t_test_result = perform_test(
         a=trained_improvements,
         b=untrained_improvements,
-        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_normalized_change_skill")
-
-    # B) Analytical Evaluation (Distribution)
-
-    # C) Hypothesis Test
-
-    # Null hypothesis: trained and untrained improvements are equally distributed
-    t_test_result = ttest_rel(
-        trained_improvements,
-        untrained_improvements,
-        # Alternative: mean of the first is greater than mean of the second distribution
-        alternative='greater'
+        a_name="Trained",b_name="Untrained", x_label="Score", filename="pre_histogram_improvement_normalized_change_skills",
+        is_graph_norm=is_graph_norm, norm_val=norm_val
     )
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
-def test_improvement_normalized_change_exercise(trained, untrained):
+def test_improvement_normalized_change_exercise(trained, untrained, is_graph_norm, norm_val=0.05):
+    """
+    Function to calculate if, and how significant the learning improvement for the trained **exercises** in terms of normalized change was, relative to the untrained exercises.
+    The is_graph_norm is an indicator, if both distributions within the pre_histogram_improvement_normalized_change_exercises.png file are a normal distribution.
+    This decides the statistical test used for evaluation.
+    """
     trained_improvements = trained["NormalizedChange"].to_numpy()
     untrained_improvements = untrained["NormalizedChange"].to_numpy()
 
-    # A) Graphical Evaluation (Distribution)
-    render_comparison_histogram(
+    t_test_result = perform_test(
         a=trained_improvements,
         b=untrained_improvements,
-        a_name="Trained",b_name="Untrained", x_label="Score", filename=f"pre_histogram_improvement_normalized_change_exercise")
-
-    # B) Analytical Evaluation (Distribution)
-
-    # C) Hypothesis Test
-
-    # Null hypothesis: trained and untrained improvements are equally distributed
-    t_test_result = ttest_rel(
-        trained_improvements,
-        untrained_improvements,
-        # Alternative: mean of the first is greater than mean of the second distribution
-        alternative='greater'
+        a_name="Trained",b_name="Untrained", x_label="Score", filename="pre_histogram_improvement_normalized_change_exercises",
+        is_graph_norm=is_graph_norm, norm_val=norm_val
     )
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
-
 trained, untrained = prepare_data()
 
-improv_t_res, improv_cohens = test_improvement_abs_skill(trained, untrained)
-improv_exercise_t_res, improv_exercise_cohens = test_improvement_abs_exercise(trained, untrained)
-normalized_t_res, normalized_cohens = test_improvement_normalized_change_skill(trained, untrained)
-normalized_exercise_t_res, normalized_exercise_cohens = test_improvement_normalized_change_exercise(trained, untrained)
-
+improv_t_res, improv_cohens = test_improvement_abs_skill(trained, untrained, is_graph_norm=False, norm_val=0.05)
+improv_exercise_t_res, improv_exercise_cohens = test_improvement_abs_exercise(trained, untrained, is_graph_norm=True, norm_val=0.05)
+normalized_t_res, normalized_cohens = test_improvement_normalized_change_skill(trained, untrained, is_graph_norm=True, norm_val=0.05)
+normalized_exercise_t_res, normalized_exercise_cohens = test_improvement_normalized_change_exercise(trained, untrained, is_graph_norm=False, norm_val=0.05)
 
 data = pd.DataFrame({
     'type' : ["improvement_abs_skill", "improvement_abs_exercise", "normalized_change_skill", "normalized_change_exercise"], 
@@ -139,8 +116,8 @@ data = pd.DataFrame({
 data.to_csv(f"results/pre_evaluation.csv", index=None)
 
 render_boxplot(
-    trained["NormalizedChange"],
-    untrained["NormalizedChange"],
+    trained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
+    untrained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
     "pre_boxplot_normalized_change",
     ["Trained Skills", "Untrained Skills"],
     title="Normalized Change"
