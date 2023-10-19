@@ -94,7 +94,7 @@ def perform_test(a, b, a_name, b_name, x_label, filename, is_related, is_graph_n
     _, norm_p_b = shapiro(b)
 
     # C) Hypothesis Test
-    if is_graph_norm and norm_p_a <= norm_val and norm_p_b <= norm_val:
+    if is_graph_norm and norm_p_a >= norm_val and norm_p_b >= norm_val:
         if is_related:
             print(f"Using a paired t-test as normality assumptions are met for {filename} with {norm_p_a} and {norm_p_b}.")
             t_test_result = ttest_rel(
