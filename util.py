@@ -102,6 +102,7 @@ def perform_test(a, b, a_name, b_name, x_label, filename, is_related, is_graph_n
                 b,
                 alternative=alternative
             )
+            print(f"t-test result: t(df)={t_test_result.statistic}, p-value={t_test_result.pvalue}, std_a={a.std()}, std_b={b.std()}, mean_a={a.mean()}, mean_b={b.mean()}")
         else:
             print(f"Using a t-test as normality assumptions are met for {filename} with {norm_p_a} and {norm_p_b}.")
             t_test_result = ttest_ind(
@@ -109,6 +110,7 @@ def perform_test(a, b, a_name, b_name, x_label, filename, is_related, is_graph_n
                 b,
                 alternative=alternative
             )
+            print(f"t-test result: t(df)={t_test_result.statistic}, p-value={t_test_result.pvalue}, std_a={a.std()}, std_b={b.std()}, mean_a={a.mean()}, mean_b={b.mean()}")
     else: 
         if is_related:
             print(f"Using a wilcoxon test as normality assumptions are not met for {filename} with {is_graph_norm} and {norm_p_a} and {norm_p_b}.")
