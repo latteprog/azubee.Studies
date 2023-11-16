@@ -22,8 +22,8 @@ def normalized_change(pretest, posttest):
     elif posttest < pretest:
         return (posttest - pretest) / (pretest)
     else:
-        # TODO : Drop when post = pre = 100 (or 0)
         # "In the [perfect score] case we argue that this student’s scores should be removed from the data sets because the student’s performance is beyond the scope of the measurement instrument"
+        # => We do not drop the student
         return 0
 
 def build_task_mapping(exercises: pd.DataFrame):
