@@ -48,8 +48,8 @@ def extract_data(study_name: str):
     raw_posttest = pd.read_excel(xlsx, "posttest")
 
     if study_name == "pre":
-        pretest = raw_pretest.loc[raw_pretest["User"] != 1]
-        posttest = raw_posttest.loc[raw_posttest["User"] != 1]
+        pretest = raw_pretest.loc[raw_pretest["User"] != 10000]
+        posttest = raw_posttest.loc[raw_posttest["User"] != 10000]
     elif study_name == "main":
         pretest = raw_pretest.loc[raw_pretest["User"] != 6]
         posttest = raw_posttest.loc[raw_posttest["User"] != 6]
