@@ -151,7 +151,7 @@ def preprocess_evaluation(study_name, skills):
                 {"name": "IPv4 Routing", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"]},
                 {"name": "IPv4 Addressing", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-addressing"]}
             ],
-            x_label="Normalized Change",
+            x_label="Normalized Learning Gain",
             filename=f"data/{study_name}/histogram_normalized_change"
         )
     else:
@@ -160,7 +160,7 @@ def preprocess_evaluation(study_name, skills):
                 {"name": "VLAN", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-vlan"]},
                 {"name": "IPv4 Routing", "values": data["NormalizedChange"].loc[data["ExerciseSkill"] == "it-network-plan-ipv4-static-routing"]}
             ],
-            x_label="Normalized Change",
+            x_label="Normalized Learning Gain",
             filename=f"data/{study_name}/histogram_normalized_change"
         )
         

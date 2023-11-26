@@ -134,5 +134,5 @@ render_boxplot(
     untrained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
     "pre/boxplot_normalized_change",
     ["Trained Skills", "Untrained Skills"],
-    title="Normalized Change"
+    title="Normalized Learning Gain"
 )
