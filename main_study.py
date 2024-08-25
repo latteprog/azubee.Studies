@@ -124,7 +124,7 @@ def test_comparison_graphs(recommended, unrecommended):
         b_name="Unrecommended",
         x_label="Standard Deviation",
         filename="comparison_post_scores_std",
-        output_dir="main/histograms"
+        output_dir="main/histograms",
     )
 
 
@@ -222,37 +222,60 @@ def test_reduced_recommendation_deviation_difference(
     The is_graph_norm is an indicator, if both distributions within the user_deviation_difference.png file are a normal distribution.
     This decides the statistical test used for evaluation.
     """
+
+    ## Calculate the mean scores for the pre and post test for each user and skill
+    ## Flatten the data to have a single value for each user and skill
     recommended_vals = (
-        recommended[["User", "PretestCorrectRel", "PosttestCorrectRel"]]
-        .groupby(["User"])
-        .std()
-    )
-    unrecommended_vals = (
-        unrecommended[["User", "PretestCorrectRel", "PosttestCorrectRel"]]
-        .groupby(["User"])
-        .std()
+        recommended[["User", "ExerciseSkill", "PosttestCorrectRel"]]
+        .groupby(["User", "ExerciseSkill"])
+        .mean()
+        .reset_index()
     )
 
-    recommended_differences = (
-        recommended_vals["PretestCorrectRel"] - recommended_vals["PosttestCorrectRel"]
-    ).to_numpy()
-    unrecommended_differences = (
-        unrecommended_vals["PretestCorrectRel"]
-        - unrecommended_vals["PosttestCorrectRel"]
-    ).to_numpy()
+    unrecommended_vals = (
+        unrecommended[["User", "ExerciseSkill", "PosttestCorrectRel"]]
+        .groupby(["User", "ExerciseSkill"])
+        .mean()
+        .reset_index()
+    )
+
+    ## Calculate the Coefficient of Variation (CV) for each user
+    recommended_mean = (
+        recommended_vals[["User", "PosttestCorrectRel"]]
+        .groupby(["User"])
+        .mean()["PosttestCorrectRel"]
+    )
+    recommended_std = (
+        recommended_vals[["User", "PosttestCorrectRel"]]
+        .groupby(["User"])
+        .std()["PosttestCorrectRel"]
+    )
+    recommended_cv = (recommended_std / recommended_mean) * 100
+
+    unrecommended_mean = (
+        unrecommended_vals[["User", "PosttestCorrectRel"]]
+        .groupby(["User"])
+        .mean()["PosttestCorrectRel"]
+    )
+    unrecommended_std = (
+        unrecommended_vals[["User", "PosttestCorrectRel"]]
+        .groupby(["User"])
+        .std()["PosttestCorrectRel"]
+    )
+    unrecommended_cv = (unrecommended_std / unrecommended_mean) * 100
 
     statistic, pvalue, test_name = perform_test(
         is_related=False,
-        a=recommended_differences,
-        b=unrecommended_differences,
+        a=recommended_cv,
+        b=unrecommended_cv,
         a_name="Recommended",
         b_name="Unrecommended",
-        x_label="Standard Deviation",
+        x_label="Coefficient of Variation (CV)",
         filename="user_deviation_difference",
         is_graph_norm=is_graph_norm,
         norm_val=norm_val,
-        # Alternative : The reduction in standard deviation for users of the recommended group was greater than the for users of the unrecommended group
-        alternative="greater",
+        # Alternative : The CV is lower for the recommendation group indicating a reduction in deviation for the skill proficiency of the users
+        alternative="less",
         output_dir="main/histograms/",
     )
 
@@ -260,7 +283,7 @@ def test_reduced_recommendation_deviation_difference(
         statistic,
         pvalue,
         test_name,
-        calculate_cohends_d(recommended_differences, unrecommended_differences),
+        calculate_cohends_d(recommended_cv, unrecommended_cv),
     )
 
 

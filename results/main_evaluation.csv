@@ -1,4 +1,4 @@
 type,t,p,cohens,test
 normalized_change_skills,203.5,0.006437988435818073,0.8774967467123179,Mann-Whitney U test
 normalized_change_user,27.0,0.017672164203763926,1.9246449036846942,Mann-Whitney U test
-reduced_deviation,22.0,0.12337662337662336,0.7180057818160166,Mann-Whitney U test
+reduced_deviation,4.0,0.025974025974025976,-1.2337873245956403,Mann-Whitney U test
