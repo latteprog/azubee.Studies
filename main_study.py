@@ -32,23 +32,6 @@ def extract_entries(df: pd.DataFrame, was_recommended: bool):
 def prepare_data():
     data = pd.read_csv("preprocessed/main_preprocessed.csv")
 
-    for student in data["User"].unique():
-        # Assuming student is defined
-        df = (
-            data.loc[data["User"] == student][
-                ["ExerciseSkill", "PretestCorrectRel", "PosttestCorrectRel"]
-            ]
-            .groupby("ExerciseSkill")
-            .mean()
-        )
-        df.reset_index(inplace=True)
-
-        plot_pre_post(
-            df=df,
-            filename=f"main/barplots/scores_{int(student)}",
-            title=f"Scores for User: {int(student)}",
-        )
-
     recommended = extract_entries(df=data, was_recommended=True)
     unrecommended = extract_entries(df=data, was_recommended=False)
 
@@ -113,7 +96,8 @@ def test_comparison_graphs(recommended, unrecommended):
         a_name="Recommended",
         b_name="Unrecommended",
         x_label="Score",
-        filename=f"main/histograms/comparison_pre_scores",
+        filename="comparison_pre_scores",
+        output_dir="main/histograms/",
     )
     render_comparison_histogram(
         a=recommended_posttest,
@@ -121,7 +105,8 @@ def test_comparison_graphs(recommended, unrecommended):
         a_name="Recommended",
         b_name="Unrecommended",
         x_label="Score",
-        filename=f"main/histograms/comparison_post_scores",
+        filename="comparison_post_scores",
+        output_dir="main/histograms/",
     )
     render_comparison_histogram(
         a=recommended_pre_std,
@@ -129,7 +114,8 @@ def test_comparison_graphs(recommended, unrecommended):
         a_name="Recommended",
         b_name="Unrecommended",
         x_label="Standard Deviation",
-        filename=f"main/histograms/comparison_pre_scores_std",
+        filename="comparison_pre_scores_std",
+        output_dir="main/histograms/",
     )
     render_comparison_histogram(
         a=recommended_post_std,
@@ -137,7 +123,8 @@ def test_comparison_graphs(recommended, unrecommended):
         a_name="Recommended",
         b_name="Unrecommended",
         x_label="Standard Deviation",
-        filename=f"main/histograms/comparison_post_scores_std",
+        filename="comparison_post_scores_std",
+        output_dir="main/histograms"
     )
 
 
@@ -167,11 +154,12 @@ def test_improvement_normalized_change_skills(
         a_name="Recommended",
         b_name="Unrecommended",
         x_label="Score",
-        filename=f"main/histograms/improvement_normalized_change_skills",
+        filename="improvement_normalized_change_skills",
         is_graph_norm=is_graph_norm,
         norm_val=norm_val,
         # Alternative : The learning improvement of the recommended group is greater than the one of the unrecommended group
         alternative="greater",
+        output_dir="main/histograms/",
     )
 
     return (
@@ -210,11 +198,12 @@ def test_improvement_normalized_change_users(
         a_name="Recommended",
         b_name="Unrecommended",
         x_label="Score",
-        filename=f"main/histograms/improvement_normalized_change_users",
+        filename="improvement_normalized_change_users",
         is_graph_norm=is_graph_norm,
         norm_val=norm_val,
         # Alternative : The learning improvement of the recommended group is greater than the one of the unrecommended group
         alternative="greater",
+        output_dir="main/histograms/",
     )
 
     return (
@@ -259,11 +248,12 @@ def test_reduced_recommendation_deviation_difference(
         a_name="Recommended",
         b_name="Unrecommended",
         x_label="Standard Deviation",
-        filename=f"main/histograms/user_deviation_difference",
+        filename="user_deviation_difference",
         is_graph_norm=is_graph_norm,
         norm_val=norm_val,
         # Alternative : The reduction in standard deviation for users of the recommended group was greater than the for users of the unrecommended group
         alternative="greater",
+        output_dir="main/histograms/",
     )
 
     return (
@@ -333,7 +323,7 @@ data.to_csv(f"results/main_evaluation.csv", index=None)
 render_boxplot(
     recommended.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
     unrecommended.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
-    "main/boxplot_normalized_change",
+    "main_boxplot_normalized_change",
     ["Recommended", "Unrecommended"],
     title="Normalized Change",
 )

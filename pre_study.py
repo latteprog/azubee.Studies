@@ -21,27 +21,11 @@ def extract_entries(df: pd.DataFrame, was_trained: bool):
 def prepare_data():
     data = pd.read_csv("preprocessed/pre_preprocessed.csv")
 
-    for student in data["User"].unique():
-        # Assuming student is defined
-        df = (
-            data.loc[data["User"] == student][
-                ["ExerciseSkill", "PretestCorrectRel", "PosttestCorrectRel"]
-            ]
-            .groupby("ExerciseSkill")
-            .mean()
-        )
-        df.reset_index(inplace=True)
-
-        plot_pre_post(
-            df=df,
-            filename=f"pre/barplots/scores_{int(student)}",
-            title=f"Scores for User: {int(student)}",
-        )
-
     trained = extract_entries(df=data, was_trained=True)
     not_trained = extract_entries(df=data, was_trained=False)
 
     return trained, not_trained
+
 
 def test_improvement_normalized_change_skill(
     trained, untrained, is_graph_norm, norm_val=0.05
@@ -64,9 +48,10 @@ def test_improvement_normalized_change_skill(
         a_name="Trained",
         b_name="Untrained",
         x_label="Score",
-        filename=f"pre/histograms/improvement_normalized_change_skills",
+        filename="improvement_normalized_change_skills",
         is_graph_norm=is_graph_norm,
         norm_val=norm_val,
+        output_dir="pre/histograms/",
     )
 
     return (
@@ -95,9 +80,10 @@ def test_improvement_normalized_change_exercise(
         a_name="Trained",
         b_name="Untrained",
         x_label="Score",
-        filename=f"pre/histograms/improvement_normalized_change_exercises",
+        filename=f"improvement_normalized_change_exercises",
         is_graph_norm=is_graph_norm,
         norm_val=norm_val,
+        output_dir="pre/histograms/"
     )
 
     return (
@@ -153,7 +139,7 @@ data.to_csv(f"results/pre_evaluation.csv", index=None)
 render_boxplot(
     trained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
     untrained.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
-    "pre/boxplot_normalized_change",
+    "pre_boxplot_normalized_change",
     ["Trained (Faded) Skills", "Untrained (Unfaded) Skills"],
     title="Normalized Learning Gain",
 )
