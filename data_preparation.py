@@ -15,8 +15,10 @@ def normalized_gain(pretest, posttest):
 def normalized_change(pretest, posttest):
     """
     Function to calculate the normalized change
-    The pretest and posttest scores are to be provided as percentages (e.g. 0,4 for 40%)
+    The pretest and posttest scores are to be provided as percentages (e.g. 40 for 40%)
     """
+    assert 0 <= pretest <= 100
+    assert 0 <= posttest <= 100
     if posttest > pretest:
         return (posttest - pretest) / (100 - pretest)
     elif posttest < pretest:
@@ -42,14 +44,13 @@ def build_task_mapping(exercises: pd.DataFrame):
 def extract_data(study_name: str):
     xlsx = pd.ExcelFile(f"data/{study_name}_evaluation.xlsx")
 
-    # The user 1 had extraordinaly bad results in the pre study (practically all 0s)
-    # The user 6 had extraordinaly bad results in the main study (all 0s)
     raw_pretest = pd.read_excel(xlsx, "pretest")
     raw_posttest = pd.read_excel(xlsx, "posttest")
 
     if study_name == "pre":
-        pretest = raw_pretest.loc[raw_pretest["User"] != 10000]
-        posttest = raw_posttest.loc[raw_posttest["User"] != 10000]
+        pretest = raw_pretest
+        posttest = raw_posttest
+    # The user 6 had extraordinaly bad results in the main study (all 0s)
     elif study_name == "main":
         pretest = raw_pretest.loc[raw_pretest["User"] != 6]
         posttest = raw_posttest.loc[raw_posttest["User"] != 6]
@@ -90,18 +91,7 @@ def preprocess_evaluation(study_name, skills):
 
         # C) Normalized Change 
         data.at[index, "NormalizedChange"] = normalized_change(pretest=rel_pre_correct, posttest=rel_post_correct)
-
-    # D) Absolute Improvement by the difference of relative correctness within post and initial test
-    data["ImprovementAbs"] = data["PosttestCorrectRel"] - data["PretestCorrectRel"]
-    assert max(data["ImprovementAbs"]) <= 100
-    assert min(data["ImprovementAbs"]) >= -100
-
-    # E) Normalized Scores
-    data["NormalizedPosttestCorrectRel"] = normalize_scores(data["PosttestCorrectRel"])
-    data["NormalizedPretestCorrectRel"] = normalize_scores(data["PretestCorrectRel"])
-    
-    data["ImprovementAbsNormalizedScores"] = data["NormalizedPosttestCorrectRel"] - data["NormalizedPretestCorrectRel"]
-
+        
     # Plot Some Histograms
 
     ## Relative Score Histogram
@@ -164,14 +154,6 @@ def preprocess_evaluation(study_name, skills):
             filename=f"data/{study_name}/histogram_normalized_change"
         )
         
-    ## Absolute Improvement Histogram
-    render_comparison_histogram(
-        a=data["ImprovementAbs"],
-        b=data["ImprovementAbsNormalizedScores"],
-        a_name="Abs", b_name="Normalized", x_label="Improvement", 
-        filename=f"data/{study_name}/histogram_improvement"
-    )
-    
     data.to_csv(f"preprocessed/{study_name}_preprocessed.csv", index=None)
 
 # The pre test where the exercise skill ordering was :
