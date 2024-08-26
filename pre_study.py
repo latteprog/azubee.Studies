@@ -116,6 +116,7 @@ def test_improvement_normalized_change_exercise(trained, untrained, is_graph_nor
 
     return t_test_result, calculate_cohends_d(trained_improvements, untrained_improvements)
 
+# NEW FUNCTION
 def test_improvement_normalized_change(trained, untrained, is_graph_norm, norm_val=0.05):
     """
     Function to calculate if, and how significant the learning improvement for the trained **exercises** in terms of normalized change was, relative to the untrained exercises.

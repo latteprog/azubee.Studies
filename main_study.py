@@ -98,6 +98,7 @@ def test_improvement_normalized_change_skills(recommended, unrecommended, is_gra
     
     return t_test_result, calculate_cohends_d(recommended_improvements, unrecommended_improvements)
 
+# NEW FUNCTION
 def test_improvement_normalized_change_users(recommended, unrecommended, is_graph_norm, norm_val=0.05):
     """
     Function to calculate if, and how significant the learning improvement for the group using the recommendation system was, relative to the group manually selecting trained skills.
@@ -164,6 +165,7 @@ def test_reduced_recommendation_deviation_difference(recommended, unrecommended,
 
     return t_test_result, calculate_cohends_d(recommended_differences, unrecommended_differences)
 
+# NEW FUNCTION
 def test_reduced_skillgap(recommended, unrecommended, is_graph_norm, norm_val=0.05):
     # Scale summed score on each skill to [0, 1] range
     recommended_skill_scores = recommended[["User", "ExerciseSkill", "PosttestCorrect"]].groupby(["User", "ExerciseSkill"]).sum().reset_index()

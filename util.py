@@ -13,7 +13,8 @@ def normalize_scores(scores):
     std = np.std(scores)
     z_scores = (scores - mean) / std
     return z_scores
-
+    
+# NEW FUNCTION
 def render_boxplot(trained, untrained, filename, labels, x_axis = "", y_axis = "", ylim = (-1.1, 1.1), title=""):
     df = pd.DataFrame({ "val": trained + untrained, "group": [labels[0][:5]] * len(trained) + [labels[1][:5]] * len(untrained) })
 
