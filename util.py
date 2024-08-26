@@ -1,6 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from scipy.stats import ttest_rel, ttest_ind, shapiro, wilcoxon, mannwhitneyu
 from math import sqrt
@@ -13,11 +14,27 @@ def normalize_scores(scores):
     z_scores = (scores - mean) / std
     return z_scores
 
-def render_boxplot(trained, untrained, filename, labels, title=""):
-    plt.title(title)
-    plt.boxplot([trained, untrained],patch_artist=True,labels=labels)
-    plt.savefig(f"img/{filename}.png")
-    plt.close()
+def render_boxplot(trained, untrained, filename, labels, x_axis = "", y_axis = "", ylim = (-1.1, 1.1), title=""):
+    df = pd.DataFrame({ "val": trained + untrained, "group": [labels[0][:5]] * len(trained) + [labels[1][:5]] * len(untrained) })
+
+    with sns.color_palette("colorblind"):
+        plt.clf()
+        plt.figure(figsize = (4.854, 3), dpi = 300)
+        sns.boxplot(data = df, x = "group", y = "val", hue = "group", order = [labels[0][:5], labels[1][:5]], width = 0.5)
+        plt.xlabel(x_axis)
+        plt.ylabel(y_axis)
+        plt.xticks([0, 1], labels)
+        plt.ylim(ylim)
+        plt.legend([],[], frameon=False)
+        plt.tight_layout()
+        print()
+        plt.savefig(f"img/{filename}.png", dpi = 300)
+        plt.close()
+
+    # plt.title(title)
+    # plt.boxplot([trained, untrained],patch_artist=True,labels=labels)
+    # plt.savefig(f"img/{filename}.png")
+    # plt.close()
 
 def render_barplot(x, y, filename, title=""):
     plt.bar(x, y)
@@ -94,7 +111,7 @@ def perform_test(a, b, a_name, b_name, x_label, filename, is_related, is_graph_n
     _, norm_p_b = shapiro(b)
 
     # C) Hypothesis Test
-    if is_graph_norm and norm_p_a <= norm_val and norm_p_b <= norm_val:
+    if is_graph_norm and norm_p_a >= norm_val and norm_p_b >= norm_val:
         if is_related:
             print(f"Using a paired t-test as normality assumptions are met for {filename} with {norm_p_a} and {norm_p_b}.")
             t_test_result = ttest_rel(

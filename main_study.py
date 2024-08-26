@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from data_preparation import normalized_change
 from util import render_comparison_histogram, calculate_cohends_d, perform_test, plot_pre_post, render_boxplot
 from scipy.stats import levene, f
 import matplotlib.pyplot as plt
@@ -103,21 +104,40 @@ def test_improvement_normalized_change_users(recommended, unrecommended, is_grap
     The is_graph_norm is an indicator, if both distributions within the improvement_normalized_change_users.png file are a normal distribution.
     This decides the statistical test used for evaluation.
     """
-    recommended_improvements = recommended[["User","NormalizedChange"]].groupby(["User"]).mean()["NormalizedChange"].to_numpy()
-    unrecommended_improvements = unrecommended[["User","NormalizedChange"]].groupby(["User"]).mean()["NormalizedChange"].to_numpy()
+    full_score = 39
+
+    # Sum scores for each user
+    recommended_scores = recommended[["User","PretestCorrect", "PosttestCorrect"]].groupby(["User"]).sum()         
+    unrecommended_scores = unrecommended[["User","PretestCorrect", "PosttestCorrect"]].groupby(["User"]).sum()
+
+    # Calculate NLG from summed scores
+    recommended_nlgs = [normalized_change(pre, post) for pre, post in zip(recommended_scores["PretestCorrect"].to_numpy() / full_score * 100, recommended_scores["PosttestCorrect"].to_numpy() / full_score * 100)]
+    unrecommended_nlgs = [normalized_change(pre, post) for pre, post in zip(unrecommended_scores["PretestCorrect"].to_numpy() / full_score * 100, unrecommended_scores["PosttestCorrect"].to_numpy() / full_score * 100)]
 
     t_test_result = perform_test(
         is_related=False,
-        a=recommended_improvements,
-        b=unrecommended_improvements,
+        a=recommended_nlgs,
+        b=unrecommended_nlgs,
         a_name="Recommended",b_name="Unrecommended", x_label="Score",
         filename=f"main/histograms/improvement_normalized_change_users",
         is_graph_norm=is_graph_norm, norm_val=norm_val,
         # Alternative : The learning improvement of the recommended group is greater than the one of the unrecommended group
         alternative='greater'
     )
+
+    render_boxplot(
+        list(recommended_nlgs),
+        list(unrecommended_nlgs),
+        "main/boxplot_normalized_change",
+        ["Recommendation", "Manual selection"],
+        y_axis = "Normalized learning gain",
+        title="Normalized Change"
+    )
+
+    print("NLG Rec", np.mean(recommended_nlgs), np.std(recommended_nlgs))
+    print("NLG Sel", np.mean(unrecommended_nlgs), np.std(unrecommended_nlgs))
     
-    return t_test_result, calculate_cohends_d(recommended_improvements, unrecommended_improvements)
+    return t_test_result, calculate_cohends_d(recommended_nlgs, unrecommended_nlgs)
 
 def test_reduced_recommendation_deviation_difference(recommended, unrecommended, is_graph_norm, norm_val=0.05):
     """
@@ -144,27 +164,69 @@ def test_reduced_recommendation_deviation_difference(recommended, unrecommended,
 
     return t_test_result, calculate_cohends_d(recommended_differences, unrecommended_differences)
 
+def test_reduced_skillgap(recommended, unrecommended, is_graph_norm, norm_val=0.05):
+    # Scale summed score on each skill to [0, 1] range
+    recommended_skill_scores = recommended[["User", "ExerciseSkill", "PosttestCorrect"]].groupby(["User", "ExerciseSkill"]).sum().reset_index()
+    recommended_skill_scores.loc[recommended_skill_scores["ExerciseSkill"] == "it-network-plan-vlan", "PosttestCorrect"] /= 20
+    recommended_skill_scores.loc[recommended_skill_scores["ExerciseSkill"] == "it-network-plan-ipv4-static-routing", "PosttestCorrect"] /= 13
+    recommended_skill_scores.loc[recommended_skill_scores["ExerciseSkill"] == "it-network-plan-ipv4-addressing", "PosttestCorrect"] /= 6
+    recommended_maxs = recommended_skill_scores[["User", "PosttestCorrect"]].groupby(["User"]).max()
+    recommended_mins = recommended_skill_scores[["User", "PosttestCorrect"]].groupby(["User"]).min()
+
+    unrecommended_skill_scores = unrecommended[["User", "ExerciseSkill", "PosttestCorrect"]].groupby(["User", "ExerciseSkill"]).sum().reset_index()
+    unrecommended_skill_scores.loc[unrecommended_skill_scores["ExerciseSkill"] == "it-network-plan-vlan", "PosttestCorrect"] /= 20
+    unrecommended_skill_scores.loc[unrecommended_skill_scores["ExerciseSkill"] == "it-network-plan-ipv4-static-routing", "PosttestCorrect"] /= 13
+    unrecommended_skill_scores.loc[unrecommended_skill_scores["ExerciseSkill"] == "it-network-plan-ipv4-addressing", "PosttestCorrect"] /= 6
+    unrecommended_maxs = unrecommended_skill_scores[["User", "PosttestCorrect"]].groupby(["User"]).max()
+    unrecommended_mins = unrecommended_skill_scores[["User", "PosttestCorrect"]].groupby(["User"]).min()
+
+    # Skill gap
+    recommended_differences = (recommended_maxs["PosttestCorrect"] - recommended_mins["PosttestCorrect"]).to_numpy()
+    unrecommended_differences = (unrecommended_maxs["PosttestCorrect"] - unrecommended_mins["PosttestCorrect"]).to_numpy()
+
+    print("Rec skill gap", np.mean(recommended_differences), np.std(recommended_differences))
+    print("Sel skill gap", np.mean(unrecommended_differences), np.std(unrecommended_differences))
+
+    t_test_result = perform_test(
+        is_related=False,
+        a=recommended_differences,
+        b=unrecommended_differences,
+        a_name="Recommended",b_name="Unrecommended", x_label="Skill gap",
+        filename=f"main/histograms/user_skill_gap",
+        is_graph_norm=is_graph_norm, norm_val=norm_val,
+        # Alternative : The reduction in standard deviation for users of the recommended group was greater than the for users of the unrecommended group
+        alternative='less'
+    )
+
+    render_boxplot(
+        list(recommended_differences),
+        list(unrecommended_differences),
+        "main/boxplot_skill_gap",
+        ["Recommendation", "Manual selection"],
+        y_axis = "Skill gap on post-test score",
+        ylim = (-0.1, 1.1),
+        title="Normalized Change"
+    )
+
+    return t_test_result, calculate_cohends_d(recommended_differences, unrecommended_differences)
+
 recommended, unrecommended = prepare_data()
-test_comparison_graphs(recommended=recommended, unrecommended=unrecommended)
+# test_comparison_graphs(recommended=recommended, unrecommended=unrecommended)
 
-improv_t_res, improv_cohens = test_improvement_abs(recommended, unrecommended, is_graph_norm=False, norm_val=0.05)
-normalized_skills_t_res, normalized_skills_cohens = test_improvement_normalized_change_skills(recommended, unrecommended, is_graph_norm=False, norm_val=0.05)
+# improv_t_res, improv_cohens = test_improvement_abs(recommended, unrecommended, is_graph_norm=False, norm_val=0.05)
+# normalized_skills_t_res, normalized_skills_cohens = test_improvement_normalized_change_skills(recommended, unrecommended, is_graph_norm=False, norm_val=0.05)
 normalized_users_t_res, normalized_users_cohens = test_improvement_normalized_change_users(recommended, unrecommended, is_graph_norm=False, norm_val=0.05)
-reduced_t_res, reduced_cohens = test_reduced_recommendation_deviation_difference(recommended=recommended, unrecommended=unrecommended, is_graph_norm=False, norm_val=0.05)
+# reduced_t_res, reduced_cohens = test_reduced_recommendation_deviation_difference(recommended=recommended, unrecommended=unrecommended, is_graph_norm=False, norm_val=0.05)
+gap_res, gap_cohens = test_reduced_skillgap(recommended=recommended, unrecommended=unrecommended, is_graph_norm=False, norm_val=0.05)
 
-data = pd.DataFrame({
-    'type' : ["improvement_abs", "normalized_change_skills", "normalized_change_user", "reduced_deviation"], 
-    't' : [improv_t_res.statistic, normalized_skills_t_res.statistic, normalized_users_t_res.statistic, reduced_t_res.statistic],
-    'p': [improv_t_res.pvalue, normalized_skills_t_res.pvalue, normalized_users_t_res.pvalue, reduced_t_res.pvalue],
-    'cohens': [improv_cohens, normalized_skills_cohens, normalized_users_cohens, reduced_cohens]
-})
+print("NLG", normalized_users_t_res, normalized_users_cohens)
+print("Skill gap", gap_res, gap_cohens)
 
-data.to_csv(f"results/main_evaluation.csv", index=None)
+# data = pd.DataFrame({
+#     'type' : ["improvement_abs", "normalized_change_skills", "normalized_change_user", "reduced_deviation", "skill_gap"], 
+#     't' : [improv_t_res.statistic, normalized_skills_t_res.statistic, normalized_users_t_res.statistic, reduced_t_res.statistic, gap_res.statistic],
+#     'p': [improv_t_res.pvalue, normalized_skills_t_res.pvalue, normalized_users_t_res.pvalue, reduced_t_res.pvalue, gap_res.pvalue],
+#     'cohens': [improv_cohens, normalized_skills_cohens, normalized_users_cohens, reduced_cohens, gap_cohens]
+# })
 
-render_boxplot(
-    recommended.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
-    unrecommended.groupby(["User", "ExerciseSkill"]).mean()["NormalizedChange"],
-    "main/boxplot_normalized_change",
-    ["Recommended", "Unrecommended"],
-    title="Normalized Change"
-)
+# data.to_csv(f"results/main_evaluation.csv", index=None)
